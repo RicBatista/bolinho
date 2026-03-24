@@ -1,8 +1,10 @@
 package com.bolinhobacalhau.controller;
 
+import com.bolinhobacalhau.dto.ZApiEnvStatus;
 import com.bolinhobacalhau.entity.NotificationLog;
 import com.bolinhobacalhau.repository.NotificationLogRepository;
 import com.bolinhobacalhau.service.NotificationScheduler;
+import com.bolinhobacalhau.service.WhatsAppService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,13 @@ public class NotificationController {
 
     private final NotificationLogRepository logRepository;
     private final NotificationScheduler scheduler;
+    private final WhatsAppService whatsAppService;
+
+    /** Indica se envio real está configurado (sem revelar tokens). */
+    @GetMapping("/zapi-estado")
+    public ResponseEntity<ZApiEnvStatus> zapiEstado() {
+        return ResponseEntity.ok(whatsAppService.zApiEnvStatus());
+    }
 
     @GetMapping("/historico")
     public ResponseEntity<List<NotificationLog>> history() {

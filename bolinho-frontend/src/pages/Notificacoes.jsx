@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { TopBar } from '../components/Sidebar'
-import { getHistoricoNotificacoes, testarEstoqueBaixo, testarContasVencidas, testarResumoDiario } from '../services/api'
+import {
+  getHistoricoNotificacoes,
+  getZApiEstado,
+  testarEstoqueBaixo,
+  testarContasVencidas,
+  testarResumoDiario,
+} from '../services/api'
 
 const TYPE_LABEL = {
   ESTOQUE_BAIXO: 'Estoque baixo', CONTA_VENCENDO: 'Conta a vencer',
@@ -28,9 +34,13 @@ function statusCell(n) {
 
 export default function Notificacoes() {
   const [historico, setHistorico] = useState([])
+  const [zapiEstado, setZapiEstado] = useState(null)
   const [loading, setLoading] = useState({})
 
-  const load = () => getHistoricoNotificacoes().then(setHistorico).catch(() => {})
+  const load = () => {
+    getHistoricoNotificacoes().then(setHistorico).catch(() => {})
+    getZApiEstado().then(setZapiEstado).catch(() => { setZapiEstado(null) })
+  }
   useEffect(() => { load() }, [])
 
   const trigger = async (key, fn) => {
@@ -74,6 +84,36 @@ export default function Notificacoes() {
             <strong> Falhou</strong> = erro HTTP ou resposta da Z-API (passe o rato no estado para ver o detalhe).
           </p>
         </div>
+
+        {zapiEstado && (
+          <div
+            className="card"
+            style={{
+              marginBottom: 20,
+              padding: 14,
+              lineHeight: 1.6,
+              border: '1px solid',
+              borderColor: zapiEstado.prontoParaEnviar ? 'var(--green)' : '#f0c94a',
+              background: zapiEstado.prontoParaEnviar ? 'var(--green-pale)' : 'var(--gold-pale)',
+            }}
+          >
+            <strong style={{ display: 'block', marginBottom: 8 }}>Estado da Z-API neste deploy (só o que o servidor “vê”)</strong>
+            <div style={{ fontSize: 13 }}>
+              {zapiEstado.prontoParaEnviar
+                ? 'Tudo certo para a API tentar enviar: envio ativado e instance + token + telefone do dono preenchidos nas variáveis.'
+                : 'Ainda não dá para enviar de verdade. Corrige no Railway (serviço da API) o que estiver em falta:'}
+              <ul style={{ margin: '8px 0 0', paddingLeft: 20 }}>
+                <li>{zapiEstado.envioAtivado ? '✓' : '✗'} <code>ZAPI_ENABLED=true</code> (envio ativado)</li>
+                <li>{zapiEstado.instanceIdDefinido ? '✓' : '✗'} <code>ZAPI_INSTANCE_ID</code></li>
+                <li>{zapiEstado.tokenDefinido ? '✓' : '✗'} <code>ZAPI_TOKEN</code></li>
+                <li>{zapiEstado.telefoneDonoDefinido ? '✓' : '✗'} <code>ZAPI_OWNER_PHONE</code> (só dígitos, ex. 5521…)</li>
+              </ul>
+              <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--navy-muted)' }}>
+                Isto não testa se a Z-API aceita o pedido; só confirma que as variáveis chegaram ao Java. Depois do ajuste, faz redeploy da API.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Trigger cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 28 }}>

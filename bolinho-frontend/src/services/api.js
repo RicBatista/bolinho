@@ -103,6 +103,8 @@ export const deleteCliente     = (id) => api.delete(`/clientes/${id}`)
 
 // ---- Notificações ----
 export const getHistoricoNotificacoes = () => api.get('/notificacoes/historico').then(r => r.data)
+/** Diagnóstico: o backend vê as variáveis ZAPI_*? (não expõe segredos) */
+export const getZApiEstado = () => api.get('/notificacoes/zapi-estado').then(r => r.data)
 export const testarEstoqueBaixo       = () => api.post('/notificacoes/testar/estoque-baixo')
 export const testarContasVencidas     = () => api.post('/notificacoes/testar/contas-vencidas')
 export const testarResumoDiario       = () => api.post('/notificacoes/testar/resumo-diario')

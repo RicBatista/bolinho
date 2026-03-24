@@ -1,5 +1,6 @@
 package com.bolinhobacalhau.service;
 
+import com.bolinhobacalhau.dto.ZApiEnvStatus;
 import com.bolinhobacalhau.entity.NotificationLog;
 import com.bolinhobacalhau.enums.NotificationType;
 import com.bolinhobacalhau.repository.NotificationLogRepository;
@@ -28,6 +29,14 @@ public class WhatsAppService {
     @Value("${zapi.enabled:false}") private boolean enabled;
 
     private static final int COOLDOWN_HOURS = 4;
+
+    /** Diagnóstico (painel Dono): o que falta para a API poder chamar a Z-API. */
+    public ZApiEnvStatus zApiEnvStatus() {
+        boolean inst = instanceId != null && !instanceId.isBlank();
+        boolean tok = token != null && !token.isBlank();
+        boolean ph = ownerPhone != null && !ownerPhone.isBlank();
+        return new ZApiEnvStatus(enabled, inst, tok, ph, enabled && inst && tok && ph);
+    }
 
     public void notifyLowStock(String name, String stock, String unit, String min) {
         String msg = String.format("*[ALERTA ESTOQUE]* \uD83D\uDCE6\n\n*%s* abaixo do mínimo!\nAtual: *%s %s*\nMínimo: *%s %s*", name, stock, unit, min, unit);
