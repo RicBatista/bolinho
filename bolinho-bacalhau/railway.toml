@@ -3,7 +3,7 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "java -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=prod -jar app.jar"
+# Omitir startCommand: Railway usa o ENTRYPOINT do Dockerfile (WORKDIR /app).
 healthcheckPath = "/api/health"
 healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
