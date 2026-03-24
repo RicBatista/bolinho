@@ -3,6 +3,13 @@ export function onlyDigits(s) {
   return String(s ?? '').replace(/\D/g, '')
 }
 
+/** CEP brasileiro: 00000-000 */
+export function formatCep(input) {
+  const d = onlyDigits(input).slice(0, 8)
+  if (d.length <= 5) return d
+  return `${d.slice(0, 5)}-${d.slice(5)}`
+}
+
 /**
  * Telefone BR: (DD) NNNNN-NNNN ou (DD) NNNN-NNNN
  * Limita a 11 dígitos (DDD + celular).

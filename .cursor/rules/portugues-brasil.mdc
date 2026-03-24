@@ -1,0 +1,8 @@
+---
+description: Português do Brasil em UI, mensagens e texto orientado ao utilizador
+globs: "**/*.{jsx,js,java,properties,md}"
+---
+
+- Usar **português do Brasil (pt-BR)** em textos de interface, alertas, validações, comentários de produto e documentação voltada ao time.
+- Vocabulário brasileiro (ex.: salvar, endereço, telefone, encomenda, estoque).
+- Datas e números monetários no padrão **pt-BR** quando exibidos ao utilizador.

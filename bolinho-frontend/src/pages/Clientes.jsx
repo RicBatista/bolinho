@@ -3,8 +3,9 @@ import { TopBar } from '../components/Sidebar'
 import { Modal } from '../components/Modal'
 import { getClientes, createCliente, updateCliente, deleteCliente } from '../services/api'
 import { formatPhoneBR, formatCpf, onlyDigits, displayPhone, displayCpf } from '../utils/brFormat'
+import CepBusca from '../components/CepBusca'
 
-const empty = { name: '', phone: '', cpf: '', address: '', notes: '' }
+const empty = { name: '', phone: '', cpf: '', cep: '', address: '', notes: '' }
 
 export default function Clientes() {
   const [items, setItems] = useState([])
@@ -34,6 +35,7 @@ export default function Clientes() {
       name: c.name,
       phone: formatPhoneBR(c.phone || ''),
       cpf: formatCpf(c.cpf || ''),
+      cep: '',
       address: c.address || '',
       notes: c.notes || '',
     })
@@ -201,9 +203,20 @@ export default function Clientes() {
               />
             </div>
           </div>
+          <CepBusca
+            cep={form.cep}
+            onCepChange={v => setForm(p => ({ ...p, cep: v }))}
+            enderecoAtual={form.address}
+            onEndereco={text => setForm(p => ({ ...p, address: text }))}
+          />
           <div className="form-group">
-            <label className="form-label">Endereço</label>
-            <input className="form-input" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
+            <label className="form-label">Endereço completo</label>
+            <input
+              className="form-input"
+              placeholder="Rua, número, complemento, bairro…"
+              value={form.address}
+              onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
+            />
           </div>
           <div className="form-group">
             <label className="form-label">Observações</label>

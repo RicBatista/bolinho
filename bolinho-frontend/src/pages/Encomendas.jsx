@@ -5,6 +5,7 @@ import { Modal } from '../components/Modal'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
 import { formatPhoneBR, formatCpf, onlyDigits, displayPhone, displayCpf } from '../utils/brFormat'
+import CepBusca from '../components/CepBusca'
 
 const STATUS_FLOW = [
   { key: 'PENDENTE',    label: 'Pendente',    color: '#888780', bg: '#F1EFE8' },
@@ -31,7 +32,7 @@ const today = () => {
 }
 
 const emptyForm = {
-  customerName: '', customerPhone: '', customerCpf: '', customerAddress: '',
+  customerName: '', customerPhone: '', customerCpf: '', cepEntrega: '', customerAddress: '',
   deliveryDate: today(), delivery: false, depositAmount: '', notes: '',
   items: [{ productId: '', quantity: 1, unitPrice: '', notes: '' }]
 }
@@ -107,6 +108,7 @@ export default function Encomendas() {
       customerName: o.customerName,
       customerPhone: formatPhoneBR(o.customerPhone || ''),
       customerCpf: formatCpf(o.customerCpf || ''),
+      cepEntrega: '',
       customerAddress: o.customerAddress || '',
       deliveryDate: o.deliveryDate ? o.deliveryDate.slice(0,16) : today(),
       delivery: o.delivery || false, depositAmount: o.depositAmount || '',
@@ -140,8 +142,9 @@ export default function Encomendas() {
   const save = async () => {
     setSaving(true)
     try {
+      const { cepEntrega, ...restForm } = form
       const payload = {
-        ...form,
+        ...restForm,
         depositAmount: parseFloat(form.depositAmount) || 0,
         items: form.items.map(i => ({
           productId: parseInt(i.productId),
@@ -367,6 +370,7 @@ export default function Encomendas() {
                   customerName: c.name || '',
                   customerPhone: formatPhoneBR(c.phone || ''),
                   customerCpf: formatCpf(c.cpf || ''),
+                  cepEntrega: '',
                   customerAddress: c.address || ''
                 }))
               }}>
@@ -432,12 +436,20 @@ export default function Encomendas() {
           </div>
 
           {form.delivery && (
-            <div className="form-group">
-              <label className="form-label">Endereço de entrega</label>
-              <input className="form-input" placeholder="Rua, número, bairro..."
-                value={form.customerAddress}
-                onChange={e => { setSelectedClientId(''); setForm(f => ({ ...f, customerAddress: e.target.value })) }} />
-            </div>
+            <>
+              <CepBusca
+                cep={form.cepEntrega}
+                onCepChange={v => { setSelectedClientId(''); setForm(f => ({ ...f, cepEntrega: v })) }}
+                enderecoAtual={form.customerAddress}
+                onEndereco={text => { setSelectedClientId(''); setForm(f => ({ ...f, customerAddress: text })) }}
+              />
+              <div className="form-group">
+                <label className="form-label">Endereço de entrega</label>
+                <input className="form-input" placeholder="Rua, número, complemento, bairro…"
+                  value={form.customerAddress}
+                  onChange={e => { setSelectedClientId(''); setForm(f => ({ ...f, customerAddress: e.target.value })) }} />
+              </div>
+            </>
           )}
 
           {/* Itens */}
