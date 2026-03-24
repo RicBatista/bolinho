@@ -2,15 +2,23 @@ package com.bolinhobacalhau.repository;
 
 import com.bolinhobacalhau.entity.Order;
 import com.bolinhobacalhau.enums.OrderStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status NOT IN :excluded")
+    long countExcludingStatuses(@Param("excluded") Collection<OrderStatus> excluded);
+
+    @Query("SELECT o FROM Order o ORDER BY o.createdAt DESC")
+    List<Order> findRecentOrders(Pageable pageable);
 
     List<Order> findByStatusOrderByDeliveryDateAsc(OrderStatus status);
 

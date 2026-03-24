@@ -81,11 +81,33 @@ public class WhatsAppService {
         send(NotificationType.RESUMO_DIARIO, ownerPhone, message);
     }
 
+    /**
+     * Atualização de pedido ao cliente (Z-API). Só deve ser chamado após opt-in registrado.
+     * Telefone normalizado para formato Brasil (55 + DDD + número).
+     */
+    public void sendOrderUpdateToCustomer(String customerPhoneRaw, String message) {
+        String phone = normalizeBrazilPhoneForZApi(customerPhoneRaw);
+        if (phone.isEmpty()) {
+            log.warn("Telefone do cliente inválido ou incompleto para WhatsApp: {}", customerPhoneRaw);
+            return;
+        }
+        send(NotificationType.CLIENTE_WHATSAPP, phone, message);
+    }
+
+    /** Dígitos com DDI 55 quando aplicável; vazio se não for possível enviar com segurança. */
+    public static String normalizeBrazilPhoneForZApi(String raw) {
+        if (raw == null) return "";
+        String d = raw.replaceAll("\\D", "");
+        if (d.isEmpty()) return "";
+        if (d.startsWith("55") && d.length() >= 12 && d.length() <= 13) return d;
+        if (d.length() == 10 || d.length() == 11) return "55" + d;
+        if (d.length() >= 12 && d.length() <= 13) return d;
+        return "";
+    }
+
     private void saveLog(NotificationType type, String phone, String message, boolean success, String error) {
         logRepository.save(NotificationLog.builder()
             .type(type).phone(phone).message(message)
             .success(success).errorMessage(error).sentAt(LocalDateTime.now()).build());
     }
 }
-// ─── método adicionado para encomendas ───────────────────────
-// Coloque este método dentro da classe WhatsAppService, antes do último }

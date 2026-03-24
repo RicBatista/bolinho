@@ -1,6 +1,7 @@
 package com.bolinhobacalhau.entity;
 
 import com.bolinhobacalhau.enums.OrderStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -26,6 +27,14 @@ public class Order {
 
     @Column(nullable = false)
     private String customerPhone;
+
+    /**
+     * Consentimento explícito para enviar mensagens de atualização deste pedido ao WhatsApp do cliente.
+     * Sem {@code true}, nenhuma notificação automática é enviada ao número do cliente.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean customerWhatsappOptIn = false;
 
     private String customerCpf;
 
@@ -74,6 +83,11 @@ public class Order {
                fetch = FetchType.EAGER, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
+
+    /** Venda gerada no caixa ao marcar a encomenda como entregue (se já existir). */
+    @OneToOne(mappedBy = "sourceOrder", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Sale linkedSale;
 
     @PrePersist
     public void prePersist() {

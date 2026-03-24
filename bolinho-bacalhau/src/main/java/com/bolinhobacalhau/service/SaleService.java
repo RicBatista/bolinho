@@ -1,6 +1,8 @@
 package com.bolinhobacalhau.service;
 
 import com.bolinhobacalhau.entity.*;
+import com.bolinhobacalhau.enums.OrderStatus;
+import com.bolinhobacalhau.enums.PaymentMethod;
 import com.bolinhobacalhau.enums.SaleStatus;
 import com.bolinhobacalhau.enums.StockMovementType;
 import com.bolinhobacalhau.repository.*;
@@ -11,9 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -90,6 +94,43 @@ public class SaleService {
         }
 
         return saved;
+    }
+
+    /**
+     * Ao marcar a encomenda como entregue, gera uma venda equivalente ao PDV (faturamento + baixa de estoque).
+     * Idempotente: não duplica se a venda já existir para este pedido.
+     */
+    @Transactional
+    public Optional<Sale> createSaleFromCompletedOrderIfAbsent(Order order) {
+        if (order.getStatus() != OrderStatus.ENTREGUE) {
+            return Optional.empty();
+        }
+        Optional<Sale> existing = saleRepository.findBySourceOrder_Id(order.getId());
+        if (existing.isPresent()) return existing;
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            throw new IllegalStateException("Encomenda sem itens não pode gerar venda.");
+        }
+        List<SaleItem> saleItems = new ArrayList<>();
+        for (OrderItem oi : order.getItems()) {
+            SaleItem si = new SaleItem();
+            Product p = new Product();
+            p.setId(oi.getProduct().getId());
+            si.setProduct(p);
+            si.setQuantity(oi.getQuantity());
+            si.setUnitPrice(oi.getUnitPrice());
+            saleItems.add(si);
+        }
+        Sale sale = Sale.builder()
+                .sourceOrder(order)
+                .saleChannel("ENCOMENDA")
+                .customerName(order.getCustomerName())
+                .customerPhone(order.getCustomerPhone())
+                .customerCpf(order.getCustomerCpf())
+                .paymentMethod(PaymentMethod.DINHEIRO)
+                .discountAmount(BigDecimal.ZERO)
+                .notes("Gerada da encomenda #" + order.getId() + " (valor total do pedido).")
+                .build();
+        return Optional.of(createSale(sale, saleItems));
     }
 
     @Transactional

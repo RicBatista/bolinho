@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { TopBar } from '../components/Sidebar'
 import { getDashboard } from '../services/api'
 import {
@@ -8,6 +9,15 @@ import {
 
 const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
 const fmtShort = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`
+
+const ORDER_STATUS_LABEL = {
+  PENDENTE: 'Pendente',
+  CONFIRMADO: 'Confirmado',
+  EM_PREPARO: 'Em preparo',
+  PRONTO: 'Pronto',
+  ENTREGUE: 'Entregue',
+  CANCELADO: 'Cancelado',
+}
 
 export default function Dashboard() {
   const [data, setData] = useState(null)
@@ -47,12 +57,17 @@ export default function Dashboard() {
       <TopBar title="Dashboard" />
       <div className="page-content">
 
+        <p style={{ fontSize: 13, color: 'var(--navy-muted)', margin: '0 0 16px', maxWidth: 720 }}>
+          O faturamento abaixo é das <strong>vendas no PDV</strong> (balcão, delivery, canal Encomenda no caixa, etc.).
+          Encomendas agendadas cadastradas em <Link to="/encomendas" style={{ color: 'var(--terra)', fontWeight: 600 }}>Encomendas</Link> aparecem na seção seguinte.
+        </p>
+
         {/* KPIs */}
         <div className="stat-grid">
           <div className="stat-card accent">
-            <div className="stat-label">Hoje</div>
+            <div className="stat-label">Hoje (PDV)</div>
             <div className="stat-value">{fmtShort(data?.revenueToday)}</div>
-            <div className="stat-sub">{data?.salesToday ?? 0} vendas</div>
+            <div className="stat-sub">{data?.salesToday ?? 0} vendas no caixa</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">Esta semana</div>
@@ -60,9 +75,14 @@ export default function Dashboard() {
             <div className="stat-sub">faturamento</div>
           </div>
           <div className="stat-card terra">
-            <div className="stat-label">Este mês</div>
+            <div className="stat-label">Este mês (PDV)</div>
             <div className="stat-value">{fmtShort(data?.revenueThisMonth)}</div>
-            <div className="stat-sub">{data?.salesThisMonth ?? 0} vendas</div>
+            <div className="stat-sub">{data?.salesThisMonth ?? 0} vendas no caixa</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Encomendas em aberto</div>
+            <div className="stat-value">{data?.activeOrdersCount ?? 0}</div>
+            <div className="stat-sub">{data?.ordersDeliveryTodayCount ?? 0} com entrega hoje</div>
           </div>
           <div className="stat-card">
             <div className="stat-label">A pagar fornecedores</div>
@@ -71,6 +91,49 @@ export default function Dashboard() {
             </div>
             <div className="stat-sub">{data?.overduePaymentsCount ?? 0} vencida(s)</div>
           </div>
+        </div>
+
+        {/* Encomendas (pedidos futuros — tela Encomendas) */}
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+            <div className="card-title" style={{ marginBottom: 0 }}>Últimas encomendas cadastradas</div>
+            <Link to="/encomendas" style={{ fontSize: 13, fontWeight: 600, color: 'var(--terra)' }}>Ver todas →</Link>
+          </div>
+          {data?.recentOrders?.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {data.recentOrders.map((o) => (
+                <div
+                  key={o.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    padding: '10px 0',
+                    borderBottom: '1px solid var(--border)',
+                    fontSize: 13,
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 600 }}>#{o.id} · {o.customerName}</div>
+                    <div style={{ fontSize: 12, color: 'var(--navy-muted)' }}>
+                      Entrega: {o.deliveryDate
+                        ? new Date(o.deliveryDate).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        : '—'}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontWeight: 600, color: 'var(--terra)' }}>{fmt(o.totalAmount)}</div>
+                    <div style={{ fontSize: 11, color: 'var(--navy-muted)' }}>{ORDER_STATUS_LABEL[o.status] || o.status}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ color: 'var(--navy-muted)', fontSize: 13 }}>
+              Nenhuma encomenda cadastrada ainda. Use o menu <strong>Encomendas</strong> para registrar pedidos futuros.
+            </div>
+          )}
         </div>
 
         {/* Charts row */}

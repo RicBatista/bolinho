@@ -23,7 +23,9 @@ COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", \
-  "-Djava.security.egd=file:/dev/./urandom", \
-  "-Dspring.profiles.active=prod", \
-  "-jar", "app.jar"]
+# Railway injeta PORT — tem de escutar aí (8080 sozinho dá 502 se PORT != 8080).
+ENTRYPOINT ["sh", "-c", "exec java \
+  -Djava.security.egd=file:/dev/./urandom \
+  -Dspring.profiles.active=prod \
+  -Dserver.port=${PORT:-8080} \
+  -jar app.jar"]

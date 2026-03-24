@@ -40,6 +40,8 @@ public class OrderController {
         private Boolean delivery = false;
         private BigDecimal depositAmount = BigDecimal.ZERO;
         private String notes;
+        /** Consentimento para WhatsApp ao cliente neste pedido (LGPD). */
+        private Boolean customerWhatsappOptIn = false;
         @NotNull  private List<OrderItemRequest> items;
     }
 
@@ -78,6 +80,7 @@ public class OrderController {
                 .delivery(req.getDelivery() != null ? req.getDelivery() : false)
                 .depositAmount(req.getDepositAmount() != null ? req.getDepositAmount() : BigDecimal.ZERO)
                 .notes(req.getNotes())
+                .customerWhatsappOptIn(Boolean.TRUE.equals(req.getCustomerWhatsappOptIn()))
                 .build();
 
         List<OrderItem> items = req.getItems().stream().map(r -> {
@@ -105,6 +108,7 @@ public class OrderController {
                 .deliveryDate(req.getDeliveryDate())
                 .delivery(req.getDelivery() != null ? req.getDelivery() : false)
                 .notes(req.getNotes())
+                .customerWhatsappOptIn(Boolean.TRUE.equals(req.getCustomerWhatsappOptIn()))
                 .build();
 
         List<OrderItem> items = req.getItems().stream().map(r -> {

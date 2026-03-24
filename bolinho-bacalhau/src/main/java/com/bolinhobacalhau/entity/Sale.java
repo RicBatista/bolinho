@@ -2,6 +2,8 @@ package com.bolinhobacalhau.entity;
 
 import com.bolinhobacalhau.enums.PaymentMethod;
 import com.bolinhobacalhau.enums.SaleStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -11,10 +13,17 @@ import java.util.List;
 
 @Entity @Table(name = "sales")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Sale {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
     @Column(nullable = false) private LocalDateTime saleDate;
     private String saleChannel;
+
+    /** Se preenchido, esta venda foi gerada ao concluir a encomenda (pedido futuro). */
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_order_id", unique = true)
+    @JsonIgnore
+    private Order sourceOrder;
     private String customerName;
     private String customerPhone;
     private String customerCpf;

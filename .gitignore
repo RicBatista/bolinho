@@ -21,6 +21,9 @@ bolinho-frontend/dist/
 .DS_Store
 Thumbs.db
 
+# Dados locais (ex.: H2 na raiz)
+/data/
+
 # Logs / misc
 *.log
 *.zip

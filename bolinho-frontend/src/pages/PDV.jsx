@@ -120,7 +120,7 @@ export default function PDV() {
   return (
     <div className="main-area">
       <TopBar title="Ponto de Venda" />
-      <div className="page-content" style={{ padding: 16 }}>
+      <div className="page-content pdv-page">
         {success && (
           <div className="alert alert-success" style={{ marginBottom: 12 }}>
             ✓ Venda registrada com sucesso!
@@ -129,21 +129,33 @@ export default function PDV() {
         <div className="pdv-grid">
           {/* LEFT: Products */}
           <div className="pdv-products">
-            {/* Category filter */}
-            <div className="seg-control" style={{ marginBottom: 12 }}>
-              {cats.map(c => (
-                <button key={c} className={`seg-btn${catFilter === c ? ' active' : ''}`} onClick={() => setCatFilter(c)}>
-                  {c === 'TODOS' ? 'Todos' : (CAT_LABELS[c] || c)}
-                </button>
-              ))}
+            <div className="pdv-category-sticky">
+              <div className="seg-control" style={{ marginBottom: 0 }}>
+                {cats.map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`seg-btn${catFilter === c ? ' active' : ''}`}
+                    onClick={() => setCatFilter(c)}
+                  >
+                    {c === 'TODOS' ? 'Todos' : (CAT_LABELS[c] || c)}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="product-grid">
               {filtered.map(p => (
-                <div key={p.id} className="product-card" onClick={() => addToCart(p)}>
+                <button
+                  key={p.id}
+                  type="button"
+                  className="product-card"
+                  onClick={() => addToCart(p)}
+                >
                   <div className="product-cat">{CAT_LABELS[p.category] || p.category}</div>
                   <div className="product-name">{p.name}</div>
                   <div className="product-price">{fmt(p.salePrice)}</div>
-                </div>
+                  <div className="product-card-add-hint">+ Adicionar ao carrinho</div>
+                </button>
               ))}
               {filtered.length === 0 && (
                 <div className="empty-state" style={{ gridColumn: '1/-1' }}>
@@ -169,9 +181,9 @@ export default function PDV() {
                 <div key={item.productId} className="cart-item">
                   <div className="cart-item-name">{item.name}</div>
                   <div className="cart-item-qty">
-                    <button className="qty-btn" onClick={() => updateQty(item.productId, -1)}>−</button>
+                    <button type="button" className="qty-btn" onClick={() => updateQty(item.productId, -1)}>−</button>
                     <span style={{ fontSize: 14, fontWeight: 600, minWidth: 20, textAlign: 'center' }}>{item.quantity}</span>
-                    <button className="qty-btn" onClick={() => updateQty(item.productId, +1)}>+</button>
+                    <button type="button" className="qty-btn" onClick={() => updateQty(item.productId, +1)}>+</button>
                   </div>
                   <div className="cart-item-price">{fmt(item.unitPrice * item.quantity)}</div>
                 </div>
@@ -292,10 +304,13 @@ export default function PDV() {
               {/* Payment */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 6, marginBottom: 14 }}>
                 {PAYMENT_METHODS.map(m => (
-                  <button key={m.value}
+                  <button
+                    key={m.value}
+                    type="button"
                     className={`btn${payment === m.value ? ' btn-navy' : ' btn-ghost'}`}
                     style={{ padding: '7px 4px', fontSize: 12, justifyContent: 'center' }}
-                    onClick={() => setPayment(m.value)}>
+                    onClick={() => setPayment(m.value)}
+                  >
                     {m.label}
                   </button>
                 ))}
@@ -314,8 +329,13 @@ export default function PDV() {
                 <span>Total</span><span>{fmt(total)}</span>
               </div>
 
-              <button className="btn btn-primary btn-block btn-lg" onClick={handleVender} disabled={loading || cart.length === 0}>
-                {loading ? 'Registrando...' : `Confirmar Venda — ${fmt(total)}`}
+              <button
+                type="button"
+                className="btn btn-primary btn-block btn-lg pdv-checkout-cta"
+                onClick={handleVender}
+                disabled={loading || cart.length === 0}
+              >
+                {loading ? 'Registrando...' : `Confirmar venda — ${fmt(total)}`}
               </button>
             </div>
           </div>

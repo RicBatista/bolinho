@@ -34,6 +34,7 @@ public class ClientController {
     @PostMapping
     public ResponseEntity<Client> create(@Valid @RequestBody Client body) {
         body.setActive(true);
+        if (body.getWhatsappOrderUpdatesOptIn() == null) body.setWhatsappOrderUpdatesOptIn(false);
         return ResponseEntity.status(201).body(clientRepository.save(body));
     }
 
@@ -50,6 +51,8 @@ public class ClientController {
         c.setAddressComplement(body.getAddressComplement());
         c.setResidenceType(body.getResidenceType());
         c.setNotes(body.getNotes());
+        c.setWhatsappOrderUpdatesOptIn(body.getWhatsappOrderUpdatesOptIn() != null
+                ? body.getWhatsappOrderUpdatesOptIn() : false);
 
         return ResponseEntity.ok(clientRepository.save(c));
     }

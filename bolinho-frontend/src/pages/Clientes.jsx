@@ -10,6 +10,7 @@ const empty = {
   name: '', phone: '', cpf: '', cep: '',
   address: '', addressNumber: '', addressComplement: '', residenceType: '',
   notes: '',
+  whatsappOrderUpdatesOptIn: false,
 }
 
 export default function Clientes() {
@@ -46,6 +47,7 @@ export default function Clientes() {
       addressComplement: c.addressComplement ?? '',
       residenceType: c.residenceType ?? '',
       notes: c.notes || '',
+      whatsappOrderUpdatesOptIn: !!c.whatsappOrderUpdatesOptIn,
     })
     setEditing(c.id)
     setModal(true)
@@ -132,7 +134,11 @@ export default function Clientes() {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontWeight: 650, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
                   {c.phone && (
-                    <div style={{ fontSize: 11, color: 'var(--navy-muted)' }}>Tel: <strong>{displayPhone(c.phone)}</strong></div>
+                    <div style={{ fontSize: 11, color: 'var(--navy-muted)' }}>Tel: <strong>{displayPhone(c.phone)}</strong>
+                      {c.whatsappOrderUpdatesOptIn && (
+                        <span style={{ marginLeft: 6, color: 'var(--green)', fontWeight: 600 }}>· WhatsApp ok</span>
+                      )}
+                    </div>
                   )}
                   {c.cpf && (
                     <div style={{ fontSize: 11, color: 'var(--navy-muted)' }}>CPF: <strong>{displayCpf(c.cpf)}</strong></div>
@@ -261,6 +267,19 @@ export default function Clientes() {
                 <option key={o.value || 'empty'} value={o.value}>{o.label}</option>
               ))}
             </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontWeight: 500 }}>
+              <input
+                type="checkbox"
+                checked={form.whatsappOrderUpdatesOptIn}
+                onChange={e => setForm(p => ({ ...p, whatsappOrderUpdatesOptIn: e.target.checked }))}
+                style={{ marginTop: 3 }}
+              />
+              <span>
+                Cliente autoriza receber por WhatsApp avisos sobre pedidos e atualizações. Sem esta opção, não enviamos mensagens automáticas ao número cadastrado.
+              </span>
+            </label>
           </div>
           <div className="form-group">
             <label className="form-label">Observações</label>

@@ -49,5 +49,13 @@ public class Client {
     @Column(nullable = false)
     @Builder.Default
     private Boolean active = true;
+
+    /**
+     * Preferência do cliente: autoriza receber por WhatsApp avisos sobre pedidos.
+     * Novas encomendas podem herdar este valor; o consentimento por pedido é {@code Order#customerWhatsappOptIn}.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean whatsappOrderUpdatesOptIn = false;
 }
 

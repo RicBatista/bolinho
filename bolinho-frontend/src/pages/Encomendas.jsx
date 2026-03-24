@@ -37,6 +37,7 @@ const emptyForm = {
   cepEntrega: '', customerAddress: '',
   customerAddressNumber: '', customerAddressComplement: '', customerResidenceType: '',
   deliveryDate: today(), delivery: false, depositAmount: '', notes: '',
+  customerWhatsappOptIn: false,
   items: [{ productId: '', quantity: 1, unitPrice: '', notes: '' }]
 }
 
@@ -119,6 +120,7 @@ export default function Encomendas() {
       deliveryDate: o.deliveryDate ? o.deliveryDate.slice(0,16) : today(),
       delivery: o.delivery || false, depositAmount: o.depositAmount || '',
       notes: o.notes || '',
+      customerWhatsappOptIn: !!o.customerWhatsappOptIn,
       items: o.items?.map(i => ({
         productId: i.product?.id || '', quantity: i.quantity,
         unitPrice: i.unitPrice, notes: i.notes || ''
@@ -167,9 +169,18 @@ export default function Encomendas() {
   }
 
   const updateStatus = async (id, status) => {
-    await api.patch(`/encomendas/${id}/status`, { status })
-    load()
-    if (detailModal?.id === id) setDetailModal(orders.find(o => o.id === id))
+    try {
+      await api.patch(`/encomendas/${id}/status`, { status })
+      load()
+      if (detailModal?.id === id) {
+        const r = await api.get(`/encomendas/${id}`)
+        setDetailModal(r.data)
+      }
+    } catch (e) {
+      const d = e.response?.data
+      const msg = typeof d === 'string' ? d : d?.message || d?.error || e.message
+      alert(msg || 'Não foi possível alterar o status. Se for entrega, verifique se há estoque suficiente para os produtos do pedido.')
+    }
   }
 
   const registerDeposit = async () => {
@@ -327,6 +338,8 @@ export default function Encomendas() {
                   <div style={{ display: 'flex', gap: 6 }} onClick={e => e.stopPropagation()}>
                     {next && (
                       <button className="btn btn-primary btn-sm" style={{ flex: 1 }}
+                        type="button"
+                        title={next === 'ENTREGUE' ? 'Registra a venda no faturamento e dá baixa no estoque (como no PDV).' : undefined}
                         onClick={() => updateStatus(o.id, next)}>
                         → {STATUS_MAP[next]?.label}
                       </button>
@@ -381,6 +394,7 @@ export default function Encomendas() {
                   customerAddressNumber: c.addressNumber ?? '',
                   customerAddressComplement: c.addressComplement ?? '',
                   customerResidenceType: c.residenceType ?? '',
+                  customerWhatsappOptIn: !!c.whatsappOrderUpdatesOptIn,
                 }))
               }}>
               <option value="">— Preencher manualmente —</option>
@@ -423,11 +437,25 @@ export default function Encomendas() {
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">CPF (opcional)</label>
+            <div className="form-group">
+              <label className="form-label">CPF (opcional)</label>
             <input className="form-input" placeholder="000.000.000-00" inputMode="numeric" autoComplete="off"
               value={form.customerCpf}
               onChange={e => { setSelectedClientId(''); setForm(f => ({ ...f, customerCpf: formatCpf(e.target.value) })) }} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontWeight: 500 }}>
+              <input
+                type="checkbox"
+                checked={form.customerWhatsappOptIn}
+                onChange={e => setForm(f => ({ ...f, customerWhatsappOptIn: e.target.checked }))}
+                style={{ marginTop: 3 }}
+              />
+              <span>
+                Cliente autorizou receber atualizações deste pedido por WhatsApp. Só enviamos mensagens automáticas ao número acima se esta opção estiver marcada (LGPD).
+              </span>
+            </label>
           </div>
 
           <div className="form-group">
@@ -566,6 +594,9 @@ export default function Encomendas() {
                 <div style={{ fontWeight: 600, fontSize: 16 }}>{o.customerName}</div>
                 <div style={{ fontSize: 13, color: 'var(--navy-muted)' }}>
                   {displayPhone(o.customerPhone)}
+                  {o.customerWhatsappOptIn && (
+                    <div style={{ marginTop: 4, color: 'var(--green)', fontWeight: 600 }}>WhatsApp: atualizações autorizadas</div>
+                  )}
                   {o.customerCpf && (
                     <div style={{ marginTop: 4 }}>CPF {displayCpf(o.customerCpf)}</div>
                   )}
@@ -608,6 +639,8 @@ export default function Encomendas() {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {next && (
                 <button className="btn btn-primary btn-sm" style={{ flex: 1 }}
+                  type="button"
+                  title={next === 'ENTREGUE' ? 'Registra a venda no faturamento e dá baixa no estoque (como no PDV).' : undefined}
                   onClick={() => updateStatus(o.id, next)}>
                   Avançar → {STATUS_MAP[next]?.label}
                 </button>

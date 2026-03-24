@@ -22,6 +22,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final SaleService saleService;
     private final WhatsAppService whatsAppService;
 
     private static final DateTimeFormatter DATE_FMT =
@@ -62,6 +63,12 @@ public class OrderService {
         if (newStatus == OrderStatus.PRONTO)
             notifyReady(saved);
 
+        // Encomenda concluída → venda no caixa (faturamento + estoque), como no PDV
+        if (newStatus == OrderStatus.ENTREGUE && old != OrderStatus.ENTREGUE) {
+            saleService.createSaleFromCompletedOrderIfAbsent(saved).ifPresent(s ->
+                    log.info("Venda {} registrada a partir da encomenda {}", s.getId(), saved.getId()));
+        }
+
         return saved;
     }
 
@@ -86,6 +93,8 @@ public class OrderService {
         order.setCustomerAddressNumber(body.getCustomerAddressNumber());
         order.setCustomerAddressComplement(body.getCustomerAddressComplement());
         order.setCustomerResidenceType(body.getCustomerResidenceType());
+        order.setCustomerWhatsappOptIn(body.getCustomerWhatsappOptIn() != null
+                ? body.getCustomerWhatsappOptIn() : false);
         order.setDeliveryDate(body.getDeliveryDate());
         order.setDelivery(body.getDelivery());
         order.setNotes(body.getNotes());
@@ -180,8 +189,9 @@ public class OrderService {
     private void notifyNewOrder(Order o) {
         String cpfLine = o.getCustomerCpf() != null && !o.getCustomerCpf().isBlank()
                 ? String.format("CPF: %s\n", o.getCustomerCpf()) : "";
-        String msg = String.format(
+        String msgOwner = String.format(
                 "\uD83D\uDCE6 *Nova encomenda recebida!*\n\n" +
+                "Pedido: #%d\n" +
                 "Cliente: *%s*\n" +
                 "Fone: %s\n" +
                 "%s" +
@@ -190,36 +200,80 @@ public class OrderService {
                 "Total: *%s*\n" +
                 "Sinal: *%s*\n" +
                 "Saldo: *%s*",
-                o.getCustomerName(), o.getCustomerPhone(), cpfLine,
+                o.getId(), o.getCustomerName(), o.getCustomerPhone(), cpfLine,
                 o.getDeliveryDate().format(DATE_FMT),
                 o.getDelivery() ? "Entrega no endereço" : "Retirada no balcão",
                 fmt(o.getTotalAmount()), fmt(o.getDepositAmount()), fmt(o.getRemainingBalance()));
-        whatsAppService.sendCustom(msg);
+        whatsAppService.sendCustom(msgOwner);
+
+        if (customerAuthorizedWhatsapp(o)) {
+            String msgCliente = String.format(
+                    "Olá, *%s*! Recebemos seu pedido *#%d*.\n\n" +
+                    "Entrega prevista: *%s*\n" +
+                    "Total: *%s* · Sinal: *%s* · Saldo: *%s*",
+                    o.getCustomerName(), o.getId(),
+                    o.getDeliveryDate().format(DATE_FMT),
+                    fmt(o.getTotalAmount()), fmt(o.getDepositAmount()), fmt(o.getRemainingBalance()));
+            whatsAppService.sendOrderUpdateToCustomer(o.getCustomerPhone(), msgCliente);
+        }
     }
 
     private void notifyConfirmed(Order o) {
-        String msg = String.format(
-                "✅ *Encomenda confirmada!*\n\n" +
+        String msgOwner = String.format(
+                "✅ *Encomenda confirmada*\n\n" +
+                "Pedido: #%d\n" +
                 "Cliente: *%s*\n" +
                 "Entrega: *%s*\n" +
-                "Saldo a pagar na entrega: *%s*",
-                o.getCustomerName(),
+                "Saldo na entrega: *%s*",
+                o.getId(), o.getCustomerName(),
                 o.getDeliveryDate().format(DATE_FMT),
                 fmt(o.getRemainingBalance()));
-        whatsAppService.sendCustom(msg);
+        whatsAppService.sendCustom(msgOwner);
+
+        if (customerAuthorizedWhatsapp(o)) {
+            String msgCliente = String.format(
+                    "Olá! Seu pedido *#%d* foi confirmado.\n\n" +
+                    "Entrega prevista: *%s*\n" +
+                    "Saldo a pagar na entrega: *%s*\n\n" +
+                    "Obrigado pela preferência!",
+                    o.getId(),
+                    o.getDeliveryDate().format(DATE_FMT),
+                    fmt(o.getRemainingBalance()));
+            whatsAppService.sendOrderUpdateToCustomer(o.getCustomerPhone(), msgCliente);
+        }
     }
 
     private void notifyReady(Order o) {
-        String msg = String.format(
-                "\uD83D\uDFE2 *Encomenda pronta!*\n\n" +
-                "*%s*, sua encomenda está pronta!\n" +
+        String entregaOuRetirada = o.getDelivery() ? "Entrega no endereço" : "Retirada no balcão";
+        String msgOwner = String.format(
+                "\uD83D\uDFE2 *Pedido pronto*\n\n" +
+                "Pedido: #%d\n" +
+                "Cliente: *%s*\n" +
                 "%s\n" +
-                "Saldo a pagar: *%s*",
-                o.getCustomerName(),
-                o.getDelivery() ? "Saímos para entrega!" : "Pode vir retirar!",
+                "%s\n" +
+                "Saldo: *%s*",
+                o.getId(), o.getCustomerName(), entregaOuRetirada,
+                o.getDelivery() ? "Combinar entrega / saída para entrega." : "Cliente pode retirar.",
                 fmt(o.getRemainingBalance()));
-        // Notifica tanto o dono quanto o cliente
-        whatsAppService.sendCustom(msg);
+        whatsAppService.sendCustom(msgOwner);
+
+        if (customerAuthorizedWhatsapp(o)) {
+            String msgCliente = String.format(
+                    "Olá, *%s*! Seu pedido *#%d* está pronto.\n\n" +
+                    "%s\n\n" +
+                    "Saldo a pagar: *%s*",
+                    o.getCustomerName(), o.getId(),
+                    o.getDelivery() ? "Em breve seguimos com a entrega." : "Pode vir retirar no balcão.",
+                    fmt(o.getRemainingBalance()));
+            whatsAppService.sendOrderUpdateToCustomer(o.getCustomerPhone(), msgCliente);
+        }
+    }
+
+    /** Opt-in explícito no pedido + telefone informado. */
+    private boolean customerAuthorizedWhatsapp(Order o) {
+        return Boolean.TRUE.equals(o.getCustomerWhatsappOptIn())
+                && o.getCustomerPhone() != null
+                && !o.getCustomerPhone().isBlank();
     }
 
     private String fmt(BigDecimal v) {

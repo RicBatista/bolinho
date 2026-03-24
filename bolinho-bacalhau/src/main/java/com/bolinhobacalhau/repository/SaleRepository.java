@@ -9,11 +9,14 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface SaleRepository extends JpaRepository<Sale, Long> {
     List<Sale> findBySaleDateBetweenOrderBySaleDateDesc(LocalDateTime start, LocalDateTime end);
     List<Sale> findByStatus(SaleStatus status);
+
+    Optional<Sale> findBySourceOrder_Id(Long orderId);
 
     @Query("SELECT SUM(s.totalAmount - COALESCE(s.discountAmount, 0)) FROM Sale s " +
            "WHERE s.saleDate BETWEEN :start AND :end AND s.status = 'PAGO'")

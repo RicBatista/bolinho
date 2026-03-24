@@ -1,8 +1,11 @@
 package com.bolinhobacalhau.service;
 
+import com.bolinhobacalhau.entity.Order;
 import com.bolinhobacalhau.entity.Purchase;
+import com.bolinhobacalhau.enums.OrderStatus;
 import com.bolinhobacalhau.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.*;
@@ -13,6 +16,7 @@ import java.util.stream.Collectors;
 public class DashboardService {
 
     private final SaleRepository saleRepository;
+    private final OrderRepository orderRepository;
     private final IngredientRepository ingredientRepository;
     private final PurchaseRepository purchaseRepository;
 
@@ -30,6 +34,27 @@ public class DashboardService {
         dash.put("revenueThisMonth",  safe(saleRepository.sumRevenueByPeriod(startMonth, now)));
         dash.put("salesToday",        (long) saleRepository.findBySaleDateBetweenOrderBySaleDateDesc(startDay, now).size());
         dash.put("salesThisMonth",    (long) saleRepository.findBySaleDateBetweenOrderBySaleDateDesc(startMonth, now).size());
+
+        // Encomendas (pedidos futuros — não são vendas de balcão; listagem separada do PDV)
+        List<OrderStatus> finalizados = List.of(OrderStatus.ENTREGUE, OrderStatus.CANCELADO);
+        dash.put("activeOrdersCount", orderRepository.countExcludingStatuses(finalizados));
+        LocalDateTime endDay = now.toLocalDate().atTime(LocalTime.MAX);
+        dash.put("ordersDeliveryTodayCount",
+                orderRepository.findByDay(startDay, endDay).stream()
+                        .filter(o -> o.getStatus() != OrderStatus.CANCELADO)
+                        .count());
+        dash.put("recentOrders", orderRepository.findRecentOrders(PageRequest.of(0, 5)).stream()
+                .map(o -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", o.getId());
+                    m.put("customerName", o.getCustomerName());
+                    m.put("status", o.getStatus().name());
+                    m.put("deliveryDate", o.getDeliveryDate() != null ? o.getDeliveryDate().toString() : "");
+                    m.put("totalAmount", o.getTotalAmount());
+                    m.put("createdAt", o.getCreatedAt() != null ? o.getCreatedAt().toString() : "");
+                    return m;
+                })
+                .collect(Collectors.toList()));
 
         // Estoque baixo
         dash.put("lowStockAlerts", ingredientRepository.findBelowMinimumStock().stream()
