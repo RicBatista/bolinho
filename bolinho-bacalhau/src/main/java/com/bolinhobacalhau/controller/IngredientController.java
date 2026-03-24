@@ -24,6 +24,8 @@ public class IngredientController {
         private String name;
         private String unit;
         private BigDecimal minimumStock = BigDecimal.ZERO;
+        /** Custo por unidade de medida (KG, L, UN…). Opcional no update: omitir para manter o atual. */
+        private BigDecimal averageCost;
         private Long preferredSupplierId;
     }
 
@@ -45,7 +47,9 @@ public class IngredientController {
         Ingredient i = Ingredient.builder()
             .name(req.getName()).unit(req.getUnit())
             .minimumStock(req.getMinimumStock() != null ? req.getMinimumStock() : BigDecimal.ZERO)
-            .currentStock(BigDecimal.ZERO).averageCost(BigDecimal.ZERO).build();
+            .currentStock(BigDecimal.ZERO)
+            .averageCost(req.getAverageCost() != null ? req.getAverageCost() : BigDecimal.ZERO)
+            .build();
         if (req.getPreferredSupplierId() != null)
             i.setPreferredSupplier(supplierRepository.findById(req.getPreferredSupplierId()).orElse(null));
         return ResponseEntity.status(201).body(ingredientRepository.save(i));
@@ -57,6 +61,8 @@ public class IngredientController {
             .orElseThrow(() -> new EntityNotFoundException("Ingrediente não encontrado"));
         i.setName(req.getName()); i.setUnit(req.getUnit());
         i.setMinimumStock(req.getMinimumStock() != null ? req.getMinimumStock() : BigDecimal.ZERO);
+        if (req.getAverageCost() != null)
+            i.setAverageCost(req.getAverageCost());
         if (req.getPreferredSupplierId() != null)
             i.setPreferredSupplier(supplierRepository.findById(req.getPreferredSupplierId()).orElse(null));
         return ResponseEntity.ok(ingredientRepository.save(i));

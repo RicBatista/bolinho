@@ -3,7 +3,12 @@ import { TopBar } from '../components/Sidebar'
 import { Modal } from '../components/Modal'
 import { getIngredientes, getFornecedores, createIngrediente, updateIngrediente } from '../services/api'
 
-const empty = { name: '', unit: 'KG', minimumStock: '', preferredSupplierId: '' }
+const empty = { name: '', unit: 'KG', minimumStock: '', averageCost: '', preferredSupplierId: '' }
+
+const fmtMoney = (v) =>
+  `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+const stockLineValue = (i) => Number(i.currentStock || 0) * Number(i.averageCost || 0)
 
 export default function Estoque() {
   const [items, setItems] = useState([])
@@ -23,14 +28,25 @@ export default function Estoque() {
   const openEdit  = (i) => {
     const byName = i.preferredSupplierName && fornecedores.find(f => f.name === i.preferredSupplierName)?.id
     setForm({
-      name: i.name, unit: i.unit, minimumStock: i.minimumStock,
+      name: i.name,
+      unit: i.unit,
+      minimumStock: i.minimumStock,
+      averageCost: i.averageCost != null && i.averageCost !== '' ? String(i.averageCost) : '',
       preferredSupplierId: i.preferredSupplierId ?? byName ?? '',
     })
     setEditing(i.id); setModal(true)
   }
 
   const save = async () => {
-    const payload = { ...form, minimumStock: parseFloat(form.minimumStock) || 0, preferredSupplierId: form.preferredSupplierId || null }
+    const payload = {
+      ...form,
+      minimumStock: parseFloat(form.minimumStock) || 0,
+      preferredSupplierId: form.preferredSupplierId || null,
+    }
+    if (form.averageCost !== '' && form.averageCost != null)
+      payload.averageCost = parseFloat(form.averageCost) || 0
+    else if (!editing) payload.averageCost = 0
+    else delete payload.averageCost
     editing ? await updateIngrediente(editing, payload) : await createIngrediente(payload)
     setModal(false); load()
   }
@@ -40,6 +56,7 @@ export default function Estoque() {
     .filter(i => tab === 'todos' || (tab === 'baixo' && i.belowMinimumStock))
 
   const belowCount = items.filter(i => i.belowMinimumStock).length
+  const totalStockValue = items.reduce((acc, i) => acc + stockLineValue(i), 0)
 
   const stockPct = (i) => {
     const min = parseFloat(i.minimumStock)
@@ -57,6 +74,16 @@ export default function Estoque() {
             {belowCount > 0 && <div className="alert alert-warn" style={{ marginTop: 8 }}>⚠ {belowCount} ingrediente(s) abaixo do estoque mínimo</div>}
           </div>
           <button className="btn btn-primary" onClick={openNew}>+ Novo ingrediente</button>
+        </div>
+
+        <div className="card" style={{ padding: 16, marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: 12, color: 'var(--navy-muted)', textTransform: 'uppercase', letterSpacing: '.04em' }}>Valor estimado em estoque</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--navy)' }}>{fmtMoney(totalStockValue)}</div>
+            <div style={{ fontSize: 12, color: 'var(--navy-muted)', marginTop: 4 }}>
+              Estoque atual multiplicado pelo custo médio por unidade (KG, L, UN…). Em <strong>Compras</strong>, o custo médio é recalculado ao registrar entradas.
+            </div>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -78,7 +105,8 @@ export default function Estoque() {
                   <th>Estoque atual</th>
                   <th>Mínimo</th>
                   <th>Nível</th>
-                  <th>Custo médio</th>
+                  <th title="Por KG, L, UN, etc. (mesma unidade da coluna de estoque)">Custo médio / unid.</th>
+                  <th>Valor em estoque</th>
                   <th>Fornecedor</th>
                   <th>Status</th>
                   <th></th>
@@ -99,7 +127,8 @@ export default function Estoque() {
                         </div>
                         <div style={{ fontSize: 10, color: 'var(--navy-muted)', marginTop: 2 }}>{Math.round(pct)}%</div>
                       </td>
-                      <td>R$ {Number(i.averageCost || 0).toFixed(4)}</td>
+                      <td title={`Por ${i.unit}`}>{fmtMoney(i.averageCost)} <span style={{ fontSize: 11, color: 'var(--navy-muted)' }}>/ {i.unit}</span></td>
+                      <td style={{ fontWeight: 600 }}>{fmtMoney(stockLineValue(i))}</td>
                       <td style={{ color: 'var(--navy-muted)' }}>{i.preferredSupplierName || '—'}</td>
                       <td>
                         {i.belowMinimumStock
@@ -113,7 +142,7 @@ export default function Estoque() {
                   )
                 })}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={8} style={{ textAlign: 'center', color: 'var(--navy-muted)', padding: 32 }}>Nenhum ingrediente encontrado</td></tr>
+                  <tr><td colSpan={9} style={{ textAlign: 'center', color: 'var(--navy-muted)', padding: 32 }}>Nenhum ingrediente encontrado</td></tr>
                 )}
               </tbody>
             </table>
@@ -138,6 +167,14 @@ export default function Estoque() {
             <div className="form-group">
               <label className="form-label">Estoque mínimo</label>
               <input className="form-input" type="number" step="0.001" value={form.minimumStock} onChange={e => setForm(p => ({ ...p, minimumStock: e.target.value }))} />
+            </div>
+            <div className="form-group" style={{ gridColumn: '1/-1' }}>
+              <label className="form-label">Custo médio por unidade (R$)</label>
+              <input className="form-input" type="number" step="0.0001" min="0" placeholder="ex.: 12,50 por kg, litro ou unidade"
+                value={form.averageCost} onChange={e => setForm(p => ({ ...p, averageCost: e.target.value }))} />
+              <div style={{ fontSize: 12, color: 'var(--navy-muted)', marginTop: 6 }}>
+                Mesma unidade escolhida acima (KG, L, UN…). Ao lançar <strong>Compras</strong>, o sistema recalcula este custo automaticamente. Em edição, deixe em branco para não alterar.
+              </div>
             </div>
             <div className="form-group" style={{ gridColumn: '1/-1' }}>
               <label className="form-label">Fornecedor preferido</label>
