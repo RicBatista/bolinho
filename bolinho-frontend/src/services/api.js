@@ -1,13 +1,23 @@
 import axios from 'axios'
 
-// Local: proxy Vite → /api. Produção: VITE_API_URL = origem do backend (https://… sem / no fim).
-// Aceita também …/api por engano (evita …/api/api/... e respostas estranhas).
+// Dev: proxy Vite em /api. Produção: VITE_API_URL = origem do backend (https://…, sem barra no fim).
+// Sem esquema na variável, assume https. Aceita sufixo …/api (evita …/api/api/…).
 function buildApiBaseURL() {
   const raw = import.meta.env.VITE_API_URL?.trim()
-  if (!raw) return '/api'
+  if (!raw) {
+    if (import.meta.env.PROD) {
+      console.warn(
+        '[api] VITE_API_URL vazia no build. Defina no Railway (Build Time) ou as chamadas usam /api no mesmo host.'
+      )
+    }
+    return '/api'
+  }
   let base = raw.replace(/\/+$/, '')
+  if (!/^https?:\/\//i.test(base)) {
+    base = `https://${base.replace(/^\/+/, '')}`
+  }
   if (base.endsWith('/api')) base = base.slice(0, -4).replace(/\/+$/, '')
-  return `${base}/api`
+  return `${base.replace(/\/+$/, '')}/api`
 }
 
 const baseURL = buildApiBaseURL()
