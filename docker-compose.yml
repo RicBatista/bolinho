@@ -60,6 +60,8 @@ services:
     build:
       context: ./bolinho-frontend
       dockerfile: Dockerfile
+      args:
+        NGINX_CONF: nginx.compose.conf
     container_name: bolinho-frontend
     restart: unless-stopped
     depends_on:

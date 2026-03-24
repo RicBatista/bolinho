@@ -17,9 +17,9 @@ FROM nginx:alpine
 # Copia o build gerado
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Configuração do Nginx: proxy /api → backend:8080
-#                        SPA fallback para React Router
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# nginx.conf = sem proxy (Railway). Compose: build-arg NGINX_CONF=nginx.compose.conf
+ARG NGINX_CONF=nginx.conf
+COPY ${NGINX_CONF} /etc/nginx/conf.d/default.conf
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN sed -i 's/\r$//' /docker-entrypoint.sh 2>/dev/null || true; chmod +x /docker-entrypoint.sh
 
