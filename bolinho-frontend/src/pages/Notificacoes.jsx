@@ -35,12 +35,25 @@ export default function Notificacoes() {
           <h1>Notificações WhatsApp</h1>
         </div>
 
-        <div className="alert alert-warn" style={{ marginBottom: 20 }}>
-          Para <strong>envio real</strong> pela Z-API: defina <code>zapi.enabled=true</code> e preencha{' '}
-          <code>zapi.instance-id</code>, <code>zapi.token</code> e <code>zapi.owner-phone</code> em{' '}
-          <code>bolinho-bacalhau/src/main/resources/application.properties</code> (desenvolvimento local), ou as variáveis{' '}
-          <code>ZAPI_ENABLED=true</code>, <code>ZAPI_INSTANCE_ID</code>, <code>ZAPI_TOKEN</code> e <code>ZAPI_OWNER_PHONE</code> no Railway / Docker (ver <code>.env.example</code>).
-          Com <code>zapi.enabled=false</code>, as mensagens só aparecem nos logs da API (modo simulado).
+        <div className="alert alert-warn" style={{ marginBottom: 20, lineHeight: 1.5 }}>
+          <p style={{ margin: '0 0 10px' }}>
+            <strong>Envio real (Z-API):</strong> use <code>zapi.enabled=true</code> e credenciais preenchidas.
+          </p>
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            <li style={{ marginBottom: 8 }}>
+              <strong>Desenvolvimento local:</strong> ficheiro{' '}
+              <code style={{ wordBreak: 'break-all' }}>bolinho-bacalhau/src/main/resources/application.properties</code>
+              {' — '}<code>zapi.instance-id</code>, <code>zapi.token</code>, <code>zapi.owner-phone</code>.
+            </li>
+            <li>
+              <strong>Railway / Docker:</strong> variáveis{' '}
+              <code>ZAPI_ENABLED=true</code>, <code>ZAPI_INSTANCE_ID</code>, <code>ZAPI_TOKEN</code>, <code>ZAPI_OWNER_PHONE</code>
+              {' '}(modelo em <code>.env.example</code>).
+            </li>
+          </ul>
+          <p style={{ margin: '10px 0 0' }}>
+            Com <code>zapi.enabled=false</code> (ou <code>ZAPI_ENABLED=false</code>), só logs da API — sem chamada à Z-API.
+          </p>
         </div>
 
         {/* Trigger cards */}
