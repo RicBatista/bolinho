@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { TopBar } from '../components/Sidebar'
 import { useAuth } from '../contexts/AuthContext'
 import { getProdutos, createVenda, getClientes } from '../services/api'
+import { getApiErrorMessage } from '../utils/apiError'
 import { formatPhoneBR, formatCpf, onlyDigits } from '../utils/brFormat'
 
 const CAT_LABELS = {
@@ -40,10 +41,19 @@ export default function PDV() {
   const [discount, setDiscount] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [clientsError, setClientsError] = useState(null)
 
   useEffect(() => {
-    getProdutos().then(setProdutos)
-    getClientes().then(setClientes).catch(() => setClientes([]))
+    getProdutos().then(setProdutos).catch(() => setProdutos([]))
+    getClientes()
+      .then((list) => {
+        setClientes(list)
+        setClientsError(null)
+      })
+      .catch((err) => {
+        setClientes([])
+        setClientsError(getApiErrorMessage(err, 'Não foi possível carregar o cadastro de clientes.'))
+      })
   }, [])
 
   const filteredClientes = useMemo(() => {
@@ -111,7 +121,7 @@ export default function PDV() {
       setDiscount('')
       setTimeout(() => setSuccess(false), 3000)
     } catch (e) {
-      alert('Erro ao registrar venda. Verifique a conexão com a API.')
+      alert(getApiErrorMessage(e, 'Erro ao registrar venda. Verifique a conexão com a API.'))
     } finally {
       setLoading(false)
     }
@@ -211,6 +221,11 @@ export default function PDV() {
 
               <div style={{ marginBottom: 10 }}>
                 <div className="form-label" style={{ marginBottom: 4 }}>Cliente cadastrado (opcional)</div>
+                {clientsError && (
+                  <div className="inline-hint inline-hint--warn" role="status">
+                    {clientsError} Você ainda pode digitar o cliente manualmente abaixo.
+                  </div>
+                )}
                 <input
                   className="form-input"
                   placeholder="Filtrar por nome, telefone ou CPF…"

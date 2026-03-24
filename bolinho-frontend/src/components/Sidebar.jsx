@@ -60,10 +60,7 @@ export function Sidebar() {
             </div>
           </div>
         )}
-        <button onClick={handleLogout}
-          style={{ width: '100%', padding: '7px 10px', borderRadius: 6, background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)', color: 'rgba(255,255,255,.6)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .15s' }}
-          onMouseOver={e => e.currentTarget.style.background = 'rgba(200,90,46,.3)'}
-          onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,.06)'}>
+        <button type="button" className="sidebar-logout" onClick={handleLogout}>
           ↩ Sair
         </button>
       </div>

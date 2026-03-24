@@ -2,7 +2,9 @@ import { useEffect, useState, useMemo } from 'react'
 import { TopBar } from '../components/Sidebar'
 import { Modal } from '../components/Modal'
 import { getClientes, createCliente, updateCliente, deleteCliente } from '../services/api'
+import { LoadErrorPanel } from '../components/LoadErrorPanel'
 import { formatPhoneBR, formatCpf, onlyDigits, displayPhone, displayCpf } from '../utils/brFormat'
+import { getApiErrorMessage } from '../utils/apiError'
 import CepBusca from '../components/CepBusca'
 import { montarEnderecoCompleto, TIPOS_RESIDENCIA } from '../utils/addressDisplay'
 
@@ -21,14 +23,19 @@ export default function Clientes() {
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
+  const [loadError, setLoadError] = useState(null)
 
   const load = () => {
     setLoading(true)
+    setLoadError(null)
     return getClientes()
-      .then(setItems)
-      .catch(() => {
+      .then((data) => {
+        setItems(data)
+        setLoadError(null)
+      })
+      .catch((err) => {
         setItems([])
-        alert('Não foi possível carregar os clientes. Verifique a API.')
+        setLoadError(getApiErrorMessage(err, 'Não foi possível carregar os clientes.'))
       })
       .finally(() => setLoading(false))
   }
@@ -65,8 +72,8 @@ export default function Clientes() {
       editing ? await updateCliente(editing, payload) : await createCliente(payload)
       setModal(false)
       await load()
-    } catch {
-      alert('Não foi possível salvar. Verifique os dados e tente de novo.')
+    } catch (e) {
+      alert(getApiErrorMessage(e, 'Não foi possível salvar. Verifique os dados e tente de novo.'))
     } finally {
       setSaving(false)
     }
@@ -77,8 +84,8 @@ export default function Clientes() {
     try {
       await deleteCliente(id)
       await load()
-    } catch {
-      alert('Não foi possível remover o cliente.')
+    } catch (e) {
+      alert(getApiErrorMessage(e, 'Não foi possível remover o cliente.'))
     }
   }
 
@@ -111,22 +118,34 @@ export default function Clientes() {
         </div>
 
         <input
-          className="form-input"
-          style={{ width: 320, marginBottom: 16 }}
+          className="form-input form-input--search"
           placeholder="Buscar cliente..."
           value={search}
           onChange={e => setSearch(e.target.value)}
+          aria-label="Buscar cliente"
         />
 
-        {loading && (
-          <div style={{ color: 'var(--navy-muted)', fontSize: 14, marginBottom: 12 }}>Carregando clientes…</div>
+        {loadError && (
+          <LoadErrorPanel
+            title="Não foi possível carregar os clientes"
+            message={loadError}
+            onRetry={load}
+            busy={loading}
+          />
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
+        {loading && !loadError && (
+          <div className="inline-loading" aria-live="polite">
+            <span className="spinner" aria-hidden />
+            <span>Carregando clientes…</span>
+          </div>
+        )}
+
+        <div className="card-grid card-grid--clients">
           {filtered.map(c => {
             const enderecoTxt = montarEnderecoCompleto(c)
             return (
-            <div key={c.id} className="card" style={{ padding: 18 }}>
+            <div key={c.id} className="card card--interactive" style={{ padding: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                 <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--font-serif)', fontSize: 16, flexShrink: 0 }}>
                   {c.name?.charAt(0)?.toUpperCase() || 'C'}
@@ -162,7 +181,7 @@ export default function Clientes() {
             </div>
           )})}
 
-          {!loading && listEmpty && (
+          {!loading && !loadError && listEmpty && (
             <div className="empty-state" style={{ gridColumn: '1/-1' }}>
               <div className="empty-state-icon">👥</div>
               <div className="empty-state-text">Nenhum cliente cadastrado</div>
@@ -171,7 +190,7 @@ export default function Clientes() {
               </div>
             </div>
           )}
-          {!loading && noMatch && (
+          {!loading && !loadError && noMatch && (
             <div className="empty-state" style={{ gridColumn: '1/-1' }}>
               <div className="empty-state-icon">🔍</div>
               <div className="empty-state-text">Nenhum cliente corresponde à busca</div>

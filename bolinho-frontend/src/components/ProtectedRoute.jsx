@@ -4,11 +4,14 @@ import { useAuth } from '../contexts/AuthContext'
 export function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth()
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--navy-muted)' }}>
-      Carregando...
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="app-boot-screen app-boot-screen--fullscreen">
+        <span className="spinner" aria-hidden />
+        <span>Carregando…</span>
+      </div>
+    )
+  }
 
   if (!user) return <Navigate to="/login" replace />
 

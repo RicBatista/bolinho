@@ -89,6 +89,7 @@ public class SecurityConfig {
         patterns.add("http://localhost:*");
         patterns.add("http://127.0.0.1:*");
         patterns.add("https://*.up.railway.app");
+        patterns.add("https://*.railway.app");
         Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty()

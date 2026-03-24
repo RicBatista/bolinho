@@ -24,6 +24,17 @@ const baseURL = buildApiBaseURL()
 
 const api = axios.create({ baseURL })
 
+/** Sempre envia o token atual (evita requisições sem Bearer após login / refresh). */
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  } else {
+    delete config.headers.Authorization
+  }
+  return config
+})
+
 const token = localStorage.getItem('token')
 if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`
 

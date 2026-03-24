@@ -4,7 +4,9 @@ import { TopBar } from '../components/Sidebar'
 import { Modal } from '../components/Modal'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
+import { LoadErrorPanel } from '../components/LoadErrorPanel'
 import { formatPhoneBR, formatCpf, onlyDigits, displayPhone, displayCpf } from '../utils/brFormat'
+import { getApiErrorMessage } from '../utils/apiError'
 import CepBusca from '../components/CepBusca'
 import { montarEnderecoPedido, TIPOS_RESIDENCIA } from '../utils/addressDisplay'
 
@@ -66,14 +68,38 @@ export default function Encomendas() {
   const [editing, setEditing]   = useState(null)
   const [depositAmt, setDepositAmt] = useState('')
   const [saving, setSaving]     = useState(false)
+  const [listLoading, setListLoading] = useState(true)
+  const [listError, setListError] = useState(null)
 
-  const load = useCallback(() => {
-    api.get('/encomendas').then(r => setOrders(asList(r.data))).catch(() => setOrders([]))
-    api.get('/produtos').then(r => setProducts(asList(r.data))).catch(() => setProducts([]))
-    api.get('/clientes').then(r => setClients(asList(r.data))).catch(() => setClients([]))
+  /** silentRefresh=true não mostra overlay de carregamento (após salvar, etc.). */
+  const load = useCallback((silentRefresh = false) => {
+    if (!silentRefresh) {
+      setListLoading(true)
+      setListError(null)
+    }
+    return Promise.all([
+      api.get('/encomendas'),
+      api.get('/produtos'),
+      api.get('/clientes'),
+    ])
+      .then(([r1, r2, r3]) => {
+        setOrders(asList(r1.data))
+        setProducts(asList(r2.data))
+        setClients(asList(r3.data))
+        setListError(null)
+      })
+      .catch((err) => {
+        setListError(getApiErrorMessage(err, 'Não foi possível carregar encomendas, produtos ou clientes.'))
+        setOrders([])
+        setProducts([])
+        setClients([])
+      })
+      .finally(() => {
+        if (!silentRefresh) setListLoading(false)
+      })
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { load(false) }, [load])
 
   const filteredClients = useMemo(() => {
     const q = clientFilter.trim().toLowerCase()
@@ -163,35 +189,35 @@ export default function Encomendas() {
       }
       editing ? await api.put(`/encomendas/${editing}`, payload)
               : await api.post('/encomendas', payload)
-      setModal(false); load()
-    } catch (e) { alert('Erro ao salvar. Verifique os campos.') }
+      setModal(false); load(true)
+    } catch (e) {
+      alert(getApiErrorMessage(e, 'Erro ao salvar. Verifique os campos e a conexão.'))
+    }
     finally { setSaving(false) }
   }
 
   const updateStatus = async (id, status) => {
     try {
       await api.patch(`/encomendas/${id}/status`, { status })
-      load()
+      await load(true)
       if (detailModal?.id === id) {
         const r = await api.get(`/encomendas/${id}`)
         setDetailModal(r.data)
       }
     } catch (e) {
-      const d = e.response?.data
-      const msg = typeof d === 'string' ? d : d?.message || d?.error || e.message
-      alert(msg || 'Não foi possível alterar o status. Se for entrega, verifique se há estoque suficiente para os produtos do pedido.')
+      alert(getApiErrorMessage(e, 'Não foi possível alterar o status. Se for entrega, verifique se há estoque suficiente para os produtos do pedido.'))
     }
   }
 
   const registerDeposit = async () => {
     await api.post(`/encomendas/${depositModal.id}/sinal`, { amount: parseFloat(depositAmt) })
-    setDepositModal(null); setDepositAmt(''); load()
+    setDepositModal(null); setDepositAmt(''); load(true)
   }
 
   const cancel = async (id) => {
     if (!confirm('Cancelar esta encomenda?')) return
     await api.patch(`/encomendas/${id}/cancelar`)
-    setDetailModal(null); load()
+    setDetailModal(null); load(true)
   }
 
   // Próximo status disponível
@@ -213,10 +239,26 @@ export default function Encomendas() {
   return (
     <div className="main-area">
       <TopBar title="Encomendas" />
-      <div className="page-content">
+      <div className="page-content page-content--encomendas">
+
+        {listError && (
+          <LoadErrorPanel
+            title="Não foi possível carregar os dados"
+            message={listError}
+            onRetry={() => load(false)}
+            busy={listLoading}
+          />
+        )}
+
+        {listLoading && !listError && (
+          <div className="inline-loading page-content__loading" aria-live="polite">
+            <span className="spinner" aria-hidden />
+            <span>Carregando encomendas…</span>
+          </div>
+        )}
 
         {/* KPIs */}
-        <div className="stat-grid" style={{ marginBottom: 20 }}>
+        <div className={`stat-grid stat-grid--encomendas ${listLoading ? 'stat-grid--muted' : ''}`} style={{ marginBottom: 20 }}>
           <div className="stat-card accent">
             <div className="stat-label">Encomendas hoje</div>
             <div className="stat-value">{todayCount}</div>
@@ -287,7 +329,7 @@ export default function Encomendas() {
               const overdue = o.overdue && o.status !== 'ENTREGUE' && o.status !== 'CANCELADO'
               const next = nextStatus(o.status)
               return (
-                <div key={o.id} className="card" style={{ padding: 16, cursor: 'pointer',
+                <div key={o.id} className="card card--interactive" style={{ padding: 16, cursor: 'pointer',
                   borderLeft: `4px solid ${s.color}`, borderRadius: '0 var(--radius-lg) var(--radius-lg) 0' }}
                   onClick={() => setDetailModal(o)}>
 

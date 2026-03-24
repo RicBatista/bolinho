@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { TopBar } from '../components/Sidebar'
 import { getDashboard } from '../services/api'
+import { LoadErrorPanel } from '../components/LoadErrorPanel'
+import { getApiErrorMessage } from '../utils/apiError'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell
@@ -22,13 +24,24 @@ const ORDER_STATUS_LABEL = {
 export default function Dashboard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
 
-  useEffect(() => {
-    getDashboard()
-      .then(setData)
-      .catch(() => setData(null))
+  const fetchDashboard = useCallback(() => {
+    setLoading(true)
+    setLoadError(null)
+    return getDashboard()
+      .then((d) => {
+        setData(d)
+        setLoadError(null)
+      })
+      .catch((err) => {
+        setData(null)
+        setLoadError(getApiErrorMessage(err, 'Não foi possível carregar o dashboard.'))
+      })
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => { fetchDashboard() }, [fetchDashboard])
 
   const last7 = data?.revenueLast7Days
     ? Object.entries(data.revenueLast7Days).map(([date, val]) => ({
@@ -43,14 +56,33 @@ export default function Dashboard() {
 
   const COLORS = ['#C85A2E', '#1C2B3A', '#D4960A', '#2E7D52']
 
-  if (loading) return (
-    <div className="main-area">
-      <TopBar title="Dashboard" />
-      <div className="page-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <div style={{ color: 'var(--navy-muted)' }}>Carregando...</div>
+  if (loading && !loadError) {
+    return (
+      <div className="main-area">
+        <TopBar title="Dashboard" />
+        <div className="page-content app-boot-screen">
+          <span className="spinner" aria-hidden />
+          <span>Carregando dashboard…</span>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  if (loadError && !data) {
+    return (
+      <div className="main-area">
+        <TopBar title="Dashboard" />
+        <div className="page-content">
+          <LoadErrorPanel
+            title="Não foi possível carregar o dashboard"
+            message={loadError}
+            onRetry={fetchDashboard}
+            busy={loading}
+          />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="main-area">
@@ -94,10 +126,10 @@ export default function Dashboard() {
         </div>
 
         {/* Encomendas (pedidos futuros — tela Encomendas) */}
-        <div className="card" style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-            <div className="card-title" style={{ marginBottom: 0 }}>Últimas encomendas cadastradas</div>
-            <Link to="/encomendas" style={{ fontSize: 13, fontWeight: 600, color: 'var(--terra)' }}>Ver todas →</Link>
+        <div className="card dashboard-panel" style={{ marginBottom: 20 }}>
+          <div className="section-header">
+            <div className="card-title">Últimas encomendas cadastradas</div>
+            <Link to="/encomendas" className="link-action">Ver todas →</Link>
           </div>
           {data?.recentOrders?.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -138,7 +170,7 @@ export default function Dashboard() {
 
         {/* Charts row */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 20 }}>
-          <div className="card">
+          <div className="card dashboard-panel">
             <div className="card-title">Faturamento — últimos 7 dias</div>
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={last7} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
@@ -156,7 +188,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
 
-          <div className="card">
+          <div className="card dashboard-panel">
             <div className="card-title">Por canal</div>
             {byChannel.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
@@ -180,7 +212,7 @@ export default function Dashboard() {
         {/* Alerts row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           {/* Low stock */}
-          <div className="card">
+          <div className="card dashboard-panel">
             <div className="card-title">Alertas de estoque</div>
             {data?.lowStockAlerts?.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -210,7 +242,7 @@ export default function Dashboard() {
           </div>
 
           {/* Upcoming payments */}
-          <div className="card">
+          <div className="card dashboard-panel">
             <div className="card-title">Contas a pagar (próximos 7 dias)</div>
             {data?.upcomingPayments?.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
