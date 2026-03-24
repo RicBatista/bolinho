@@ -36,31 +36,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(c -> c.configurationSource(corsSource()))
-            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**","/api/health","/swagger-ui/**","/swagger-ui.html",
-                    "/api-docs/**","/h2-console/**","/","/index.html",
-                    "/assets/**","/*.js","/*.css","/*.ico").permitAll()
-                .requestMatchers("/api/fornecedores/**").hasAnyRole("DONO","GESTOR")
-                .requestMatchers("/api/compras/**").hasAnyRole("DONO","GESTOR")
-                .requestMatchers("/api/notificacoes/**").hasRole("DONO")
-                .requestMatchers("/api/dashboard/**").hasAnyRole("DONO","GESTOR")
-                .requestMatchers("/api/ingredientes/**").hasAnyRole("DONO","GESTOR")
-                .requestMatchers(HttpMethod.GET, "/api/clientes/**").hasAnyRole("DONO","GESTOR","CAIXA")
-                .requestMatchers(HttpMethod.POST, "/api/clientes/**").hasAnyRole("DONO","GESTOR")
-                .requestMatchers(HttpMethod.PUT, "/api/clientes/**").hasAnyRole("DONO","GESTOR")
-                .requestMatchers(HttpMethod.DELETE, "/api/clientes/**").hasAnyRole("DONO","GESTOR")
-                .requestMatchers("/api/produtos/**").hasAnyRole("DONO","GESTOR","CAIXA")
-                .requestMatchers("/api/vendas/**").hasAnyRole("DONO","GESTOR","CAIXA")
-                .requestMatchers("/api/encomendas/**").hasAnyRole("DONO","GESTOR","CAIXA")
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .headers(h -> h.frameOptions(f -> f.sameOrigin()))
-            .build();
+                .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable)
+                .cors(c -> c.configurationSource(corsSource()))
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/**","/api/health","/swagger-ui/**","/swagger-ui.html",
+                                "/api-docs/**","/h2-console/**","/","/index.html",
+                                "/assets/**","/*.js","/*.css","/*.ico").permitAll()
+                        .requestMatchers("/api/fornecedores/**").hasAnyRole("DONO","GESTOR")
+                        .requestMatchers("/api/compras/**").hasAnyRole("DONO","GESTOR")
+                        .requestMatchers("/api/notificacoes/**").hasRole("DONO")
+                        .requestMatchers("/api/dashboard/**").hasAnyRole("DONO","GESTOR")
+                        .requestMatchers("/api/ingredientes/**").hasAnyRole("DONO","GESTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/clientes/**").hasAnyRole("DONO","GESTOR","CAIXA")
+                        .requestMatchers(HttpMethod.POST, "/api/clientes/**").hasAnyRole("DONO","GESTOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/clientes/**").hasAnyRole("DONO","GESTOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/clientes/**").hasAnyRole("DONO","GESTOR")
+                        .requestMatchers("/api/produtos/**").hasAnyRole("DONO","GESTOR","CAIXA")
+                        .requestMatchers("/api/vendas/**").hasAnyRole("DONO","GESTOR","CAIXA")
+                        .requestMatchers("/api/encomendas/**").hasAnyRole("DONO","GESTOR","CAIXA")
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .headers(h -> h.frameOptions(f -> f.sameOrigin()))
+                .build();
     }
 
     @Bean
@@ -82,19 +85,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsSource() {
         var config = new CorsConfiguration();
-        // Qualquer porta em localhost/127.0.0.1 (Vite muda de 3000, 5173, 3001, etc.)
         List<String> patterns = new ArrayList<>();
         patterns.add("http://localhost:*");
         patterns.add("http://127.0.0.1:*");
-        // Railway (front e API em *.up.railway.app) — evita 403/405 em preflight se CORS_ALLOWED_ORIGINS faltar
         patterns.add("https://*.up.railway.app");
-        // Produção: front em HTTPS ou domínio (variável CORS_ALLOWED_ORIGINS)
         Arrays.stream(allowedOrigins.split(","))
-            .map(String::trim)
-            .filter(s -> !s.isEmpty()
-                && !s.startsWith("http://localhost")
-                && !s.startsWith("http://127.0.0.1"))
-            .forEach(patterns::add);
+                .map(String::trim)
+                .filter(s -> !s.isEmpty()
+                        && !s.startsWith("http://localhost")
+                        && !s.startsWith("http://127.0.0.1"))
+                .forEach(patterns::add);
         config.setAllowedOriginPatterns(patterns);
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
