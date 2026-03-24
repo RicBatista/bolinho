@@ -83,6 +83,9 @@ public class OrderService {
         order.setCustomerPhone(body.getCustomerPhone());
         order.setCustomerCpf(body.getCustomerCpf());
         order.setCustomerAddress(body.getCustomerAddress());
+        order.setCustomerAddressNumber(body.getCustomerAddressNumber());
+        order.setCustomerAddressComplement(body.getCustomerAddressComplement());
+        order.setCustomerResidenceType(body.getCustomerResidenceType());
         order.setDeliveryDate(body.getDeliveryDate());
         order.setDelivery(body.getDelivery());
         order.setNotes(body.getNotes());

@@ -31,6 +31,14 @@ public class Order {
 
     private String customerAddress;
 
+    private String customerAddressNumber;
+
+    private String customerAddressComplement;
+
+    /** CASA, APARTAMENTO, COBERTURA, COMERCIAL, OUTRO */
+    @Column(length = 40)
+    private String customerResidenceType;
+
     // ── Entrega ──────────────────────────────────────────────
     @Column(nullable = false)
     private LocalDateTime deliveryDate;

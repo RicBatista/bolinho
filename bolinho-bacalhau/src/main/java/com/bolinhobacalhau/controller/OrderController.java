@@ -33,6 +33,9 @@ public class OrderController {
         @NotBlank private String customerPhone;
         private String customerCpf;
         private String customerAddress;
+        private String customerAddressNumber;
+        private String customerAddressComplement;
+        private String customerResidenceType;
         @NotNull  private LocalDateTime deliveryDate;
         private Boolean delivery = false;
         private BigDecimal depositAmount = BigDecimal.ZERO;
@@ -68,6 +71,9 @@ public class OrderController {
                 .customerPhone(req.getCustomerPhone())
                 .customerCpf(req.getCustomerCpf())
                 .customerAddress(req.getCustomerAddress())
+                .customerAddressNumber(req.getCustomerAddressNumber())
+                .customerAddressComplement(req.getCustomerAddressComplement())
+                .customerResidenceType(req.getCustomerResidenceType())
                 .deliveryDate(req.getDeliveryDate())
                 .delivery(req.getDelivery() != null ? req.getDelivery() : false)
                 .depositAmount(req.getDepositAmount() != null ? req.getDepositAmount() : BigDecimal.ZERO)
@@ -93,6 +99,9 @@ public class OrderController {
                 .customerPhone(req.getCustomerPhone())
                 .customerCpf(req.getCustomerCpf())
                 .customerAddress(req.getCustomerAddress())
+                .customerAddressNumber(req.getCustomerAddressNumber())
+                .customerAddressComplement(req.getCustomerAddressComplement())
+                .customerResidenceType(req.getCustomerResidenceType())
                 .deliveryDate(req.getDeliveryDate())
                 .delivery(req.getDelivery() != null ? req.getDelivery() : false)
                 .notes(req.getNotes())

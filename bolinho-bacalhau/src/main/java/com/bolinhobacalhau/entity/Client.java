@@ -27,8 +27,21 @@ public class Client {
     @Column(length = 20)
     private String cpf;
 
+    /** Logradouro, bairro, cidade/UF e CEP (ex.: texto vindo do ViaCEP), sem número. */
     @Column(length = 500)
     private String address;
+
+    /** Número (ex.: 120, S/N). */
+    @Column(length = 30)
+    private String addressNumber;
+
+    /** Complemento (apto, bloco, sala…). */
+    @Column(length = 200)
+    private String addressComplement;
+
+    /** CASA, APARTAMENTO, COBERTURA, COMERCIAL, OUTRO */
+    @Column(length = 40)
+    private String residenceType;
 
     @Column(length = 1000)
     private String notes;

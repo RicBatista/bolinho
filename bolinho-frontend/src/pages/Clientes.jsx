@@ -4,8 +4,13 @@ import { Modal } from '../components/Modal'
 import { getClientes, createCliente, updateCliente, deleteCliente } from '../services/api'
 import { formatPhoneBR, formatCpf, onlyDigits, displayPhone, displayCpf } from '../utils/brFormat'
 import CepBusca from '../components/CepBusca'
+import { montarEnderecoCompleto, TIPOS_RESIDENCIA } from '../utils/addressDisplay'
 
-const empty = { name: '', phone: '', cpf: '', cep: '', address: '', notes: '' }
+const empty = {
+  name: '', phone: '', cpf: '', cep: '',
+  address: '', addressNumber: '', addressComplement: '', residenceType: '',
+  notes: '',
+}
 
 export default function Clientes() {
   const [items, setItems] = useState([])
@@ -37,6 +42,9 @@ export default function Clientes() {
       cpf: formatCpf(c.cpf || ''),
       cep: '',
       address: c.address || '',
+      addressNumber: c.addressNumber ?? '',
+      addressComplement: c.addressComplement ?? '',
+      residenceType: c.residenceType ?? '',
       notes: c.notes || '',
     })
     setEditing(c.id)
@@ -113,7 +121,9 @@ export default function Clientes() {
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
-          {filtered.map(c => (
+          {filtered.map(c => {
+            const enderecoTxt = montarEnderecoCompleto(c)
+            return (
             <div key={c.id} className="card" style={{ padding: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                 <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--navy)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'var(--font-serif)', fontSize: 16, flexShrink: 0 }}>
@@ -130,9 +140,11 @@ export default function Clientes() {
                 </div>
               </div>
 
-              {(c.address || c.notes) && (
+              {(enderecoTxt || c.notes) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 13, color: 'var(--navy-muted)', marginBottom: 12 }}>
-                  {c.address && <div><strong style={{ color: 'var(--navy-muted)' }}>Endereço:</strong> {c.address}</div>}
+                  {enderecoTxt && (
+                    <div><strong style={{ color: 'var(--navy-muted)' }}>Endereço:</strong> {enderecoTxt}</div>
+                  )}
                   {c.notes && <div><strong style={{ color: 'var(--navy-muted)' }}>Obs.:</strong> {c.notes}</div>}
                 </div>
               )}
@@ -142,7 +154,7 @@ export default function Clientes() {
                 <button className="btn btn-danger btn-sm" onClick={() => deactivate(c.id)}>Remover</button>
               </div>
             </div>
-          ))}
+          )})}
 
           {!loading && listEmpty && (
             <div className="empty-state" style={{ gridColumn: '1/-1' }}>
@@ -210,13 +222,45 @@ export default function Clientes() {
             onEndereco={text => setForm(p => ({ ...p, address: text }))}
           />
           <div className="form-group">
-            <label className="form-label">Endereço completo</label>
+            <label className="form-label">Logradouro, bairro e cidade</label>
             <input
               className="form-input"
-              placeholder="Rua, número, complemento, bairro…"
+              placeholder="Preenchido pelo CEP ou digite à mão"
               value={form.address}
               onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
             />
+          </div>
+          <div className="form-grid-2">
+            <div className="form-group">
+              <label className="form-label">Número</label>
+              <input
+                className="form-input"
+                placeholder="Ex.: 120 ou S/N"
+                value={form.addressNumber}
+                onChange={e => setForm(p => ({ ...p, addressNumber: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Complemento</label>
+              <input
+                className="form-input"
+                placeholder="Apto, bloco, sala…"
+                value={form.addressComplement}
+                onChange={e => setForm(p => ({ ...p, addressComplement: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Tipo de residência</label>
+            <select
+              className="form-select"
+              value={form.residenceType}
+              onChange={e => setForm(p => ({ ...p, residenceType: e.target.value }))}
+            >
+              {TIPOS_RESIDENCIA.map(o => (
+                <option key={o.value || 'empty'} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           </div>
           <div className="form-group">
             <label className="form-label">Observações</label>

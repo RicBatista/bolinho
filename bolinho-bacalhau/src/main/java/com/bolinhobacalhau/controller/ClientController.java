@@ -46,6 +46,9 @@ public class ClientController {
         c.setPhone(body.getPhone());
         c.setCpf(body.getCpf());
         c.setAddress(body.getAddress());
+        c.setAddressNumber(body.getAddressNumber());
+        c.setAddressComplement(body.getAddressComplement());
+        c.setResidenceType(body.getResidenceType());
         c.setNotes(body.getNotes());
 
         return ResponseEntity.ok(clientRepository.save(c));

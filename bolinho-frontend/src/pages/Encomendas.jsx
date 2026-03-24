@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
 import { formatPhoneBR, formatCpf, onlyDigits, displayPhone, displayCpf } from '../utils/brFormat'
 import CepBusca from '../components/CepBusca'
+import { montarEnderecoPedido, TIPOS_RESIDENCIA } from '../utils/addressDisplay'
 
 const STATUS_FLOW = [
   { key: 'PENDENTE',    label: 'Pendente',    color: '#888780', bg: '#F1EFE8' },
@@ -32,7 +33,9 @@ const today = () => {
 }
 
 const emptyForm = {
-  customerName: '', customerPhone: '', customerCpf: '', cepEntrega: '', customerAddress: '',
+  customerName: '', customerPhone: '', customerCpf: '',
+  cepEntrega: '', customerAddress: '',
+  customerAddressNumber: '', customerAddressComplement: '', customerResidenceType: '',
   deliveryDate: today(), delivery: false, depositAmount: '', notes: '',
   items: [{ productId: '', quantity: 1, unitPrice: '', notes: '' }]
 }
@@ -110,6 +113,9 @@ export default function Encomendas() {
       customerCpf: formatCpf(o.customerCpf || ''),
       cepEntrega: '',
       customerAddress: o.customerAddress || '',
+      customerAddressNumber: o.customerAddressNumber ?? '',
+      customerAddressComplement: o.customerAddressComplement ?? '',
+      customerResidenceType: o.customerResidenceType ?? '',
       deliveryDate: o.deliveryDate ? o.deliveryDate.slice(0,16) : today(),
       delivery: o.delivery || false, depositAmount: o.depositAmount || '',
       notes: o.notes || '',
@@ -371,7 +377,10 @@ export default function Encomendas() {
                   customerPhone: formatPhoneBR(c.phone || ''),
                   customerCpf: formatCpf(c.cpf || ''),
                   cepEntrega: '',
-                  customerAddress: c.address || ''
+                  customerAddress: c.address || '',
+                  customerAddressNumber: c.addressNumber ?? '',
+                  customerAddressComplement: c.addressComplement ?? '',
+                  customerResidenceType: c.residenceType ?? '',
                 }))
               }}>
               <option value="">— Preencher manualmente —</option>
@@ -444,10 +453,36 @@ export default function Encomendas() {
                 onEndereco={text => { setSelectedClientId(''); setForm(f => ({ ...f, customerAddress: text })) }}
               />
               <div className="form-group">
-                <label className="form-label">Endereço de entrega</label>
-                <input className="form-input" placeholder="Rua, número, complemento, bairro…"
+                <label className="form-label">Logradouro, bairro e cidade</label>
+                <input className="form-input" placeholder="Preenchido pelo CEP ou digite à mão"
                   value={form.customerAddress}
                   onChange={e => { setSelectedClientId(''); setForm(f => ({ ...f, customerAddress: e.target.value })) }} />
+              </div>
+              <div className="form-grid-2">
+                <div className="form-group">
+                  <label className="form-label">Número</label>
+                  <input className="form-input" placeholder="Ex.: 120 ou S/N"
+                    value={form.customerAddressNumber}
+                    onChange={e => { setSelectedClientId(''); setForm(f => ({ ...f, customerAddressNumber: e.target.value })) }} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Complemento</label>
+                  <input className="form-input" placeholder="Apto, bloco, sala…"
+                    value={form.customerAddressComplement}
+                    onChange={e => { setSelectedClientId(''); setForm(f => ({ ...f, customerAddressComplement: e.target.value })) }} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Tipo de residência</label>
+                <select
+                  className="form-select"
+                  value={form.customerResidenceType}
+                  onChange={e => { setSelectedClientId(''); setForm(f => ({ ...f, customerResidenceType: e.target.value })) }}
+                >
+                  {TIPOS_RESIDENCIA.map(o => (
+                    <option key={o.value || 'empty'} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
               </div>
             </>
           )}
@@ -521,6 +556,7 @@ export default function Encomendas() {
       {/* MODAL: Detalhe */}
       {detailModal && (() => {
         const o = orders.find(x => x.id === detailModal.id) || detailModal
+        const enderecoPedido = montarEnderecoPedido(o)
         const s = STATUS_MAP[o.status] || STATUS_MAP['PENDENTE']
         const next = nextStatus(o.status)
         return (
@@ -546,7 +582,7 @@ export default function Encomendas() {
                 o.customerCpf && ['CPF', displayCpf(o.customerCpf)],
                 ['Total', fmt(o.totalAmount)],
                 ['Saldo', fmt(o.remainingBalance)],
-                o.customerAddress && ['Endereço', o.customerAddress],
+                enderecoPedido && ['Endereço', enderecoPedido],
                 o.notes && ['Obs.', o.notes],
               ].filter(Boolean).map(([k, v]) => (
                 <div key={k} style={{ background: 'var(--cream)', borderRadius: 'var(--radius-sm)', padding: '8px 10px' }}>
