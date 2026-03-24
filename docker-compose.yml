@@ -1,0 +1,72 @@
+version: '3.9'
+
+services:
+
+  # ─────────────────────────────────────────
+  # Banco de dados PostgreSQL
+  # ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: bolinho-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       bolinhodb
+      POSTGRES_USER:     bolinho_user
+      POSTGRES_PASSWORD: bolinho_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bolinho_user -d bolinhodb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  # Backend Spring Boot
+  # ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./bolinho-bacalhau
+      dockerfile: Dockerfile
+    container_name: bolinho-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL:      jdbc:postgresql://postgres:5432/bolinhodb
+      DATABASE_USERNAME: bolinho_user
+      DATABASE_PASSWORD: bolinho_pass
+      JWT_SECRET:        bolinho-docker-local-secret-troque-em-prod
+      JWT_EXPIRATION_HOURS: 24
+      ZAPI_ENABLED:      false
+    ports:
+      - "8080:8080"
+    healthcheck:
+      # /api/dashboard exige JWT — usar endpoint público (ver HealthController)
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 120s
+
+  # ─────────────────────────────────────────
+  # Frontend React (Nginx)
+  # ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./bolinho-frontend
+      dockerfile: Dockerfile
+    container_name: bolinho-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
