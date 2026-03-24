@@ -1,0 +1,13 @@
+# Monorepo: força build por Docker (evita Railpack na raiz sem pom.xml/package.json).
+# Variáveis: PostgreSQL plugin + DATABASE_URL (JDBC), DATABASE_USERNAME, DATABASE_PASSWORD,
+# JWT_SECRET, CORS_ALLOWED_ORIGINS (URL do frontend), PORT é injetado pelo Railway.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "java -Djava.security.egd=file:/dev/./urandom -Dspring.profiles.active=prod -jar app.jar"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

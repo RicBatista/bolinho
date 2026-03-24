@@ -1,0 +1,7 @@
+# Não enviar ao daemon Docker (build mais rápido e imagem menor)
+.git
+.idea
+**/.DS_Store
+bolinho-frontend/node_modules
+bolinho-frontend/dist
+bolinho-bacalhau/target
