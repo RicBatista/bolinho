@@ -16,6 +16,9 @@ import java.util.Optional;
 @Service @RequiredArgsConstructor @Slf4j
 public class WhatsAppService {
 
+    /** Prefixo em {@code errorMessage} quando não houve chamada HTTP à Z-API (UI mostra “Simulado”). */
+    public static final String SIMULATED_LOG_PREFIX = "SIMULADO:";
+
     private final NotificationLogRepository logRepository;
     private final RestTemplate restTemplate;
 
@@ -48,7 +51,7 @@ public class WhatsAppService {
 
     private void sendWithCooldown(NotificationType type, String phone, String message) {
         Optional<NotificationLog> recent = logRepository
-            .findTopByTypeAndPhoneAndSentAtAfterOrderBySentAtDesc(
+            .findTopByTypeAndPhoneAndSuccessTrueAndSentAtAfterOrderBySentAtDesc(
                 type, phone, LocalDateTime.now().minusHours(COOLDOWN_HOURS));
         if (recent.isPresent()) { log.info("Notificação {} em cooldown", type); return; }
         send(type, phone, message);
@@ -57,11 +60,14 @@ public class WhatsAppService {
     private void send(NotificationType type, String phone, String message) {
         if (!enabled) {
             log.info("[WhatsApp SIMULADO] Para: {} | {}", phone, message.substring(0, Math.min(50, message.length())));
-            saveLog(type, phone, message, true, null);
+            saveLog(type, phone, message, false,
+                SIMULATED_LOG_PREFIX + " Z-API desligada (zapi.enabled / ZAPI_ENABLED=false). Nada foi enviado ao WhatsApp.");
             return;
         }
         if (instanceId.isBlank() || token.isBlank() || phone.isBlank()) {
             log.warn("WhatsApp não configurado.");
+            saveLog(type, phone, message, false,
+                "Z-API incompleto: defina instance-id, token e telefone do dono (ZAPI_* ou zapi.*).");
             return;
         }
         try {

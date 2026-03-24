@@ -13,6 +13,19 @@ const TYPE_BADGE = {
   CLIENTE_WHATSAPP: 'badge-green',
 }
 
+const SIMULATED_PREFIX = 'SIMULADO:'
+
+function statusCell(n) {
+  if (n.success) {
+    return <span className="badge badge-green">Enviado</span>
+  }
+  const err = n.errorMessage || ''
+  if (err.startsWith(SIMULATED_PREFIX)) {
+    return <span className="badge badge-gold" title={err}>Simulado</span>
+  }
+  return <span className="badge badge-red" title={err}>Falhou</span>
+}
+
 export default function Notificacoes() {
   const [historico, setHistorico] = useState([])
   const [loading, setLoading] = useState({})
@@ -36,31 +49,29 @@ export default function Notificacoes() {
         </div>
 
         <div className="alert alert-warn" style={{ marginBottom: 20, lineHeight: 1.5 }}>
-          <p style={{ margin: '0 0 8px' }}>
-            A Z-API corre no <strong>backend (API Java)</strong>, não neste site. Ative credenciais lá.
-          </p>
           <p style={{ margin: '0 0 10px' }}>
-            <strong>Envio real (Z-API):</strong> use <code>zapi.enabled=true</code> e credenciais preenchidas (em produção,
-            o equivalente são <code>ZAPI_ENABLED=true</code> e os restantes <code>ZAPI_*</code> abaixo).
+            O WhatsApp só é enviado pela <strong>Z-API no serviço da API (Java)</strong>, não por este site.
+            Se o telemóvel não recebe nada, o problema está nas <strong>Variables</strong> / credenciais desse backend — não aqui.
           </p>
           <ul style={{ margin: 0, paddingLeft: 20 }}>
             <li style={{ marginBottom: 8 }}>
-              <strong>Produção (Railway, etc.):</strong> no serviço onde está a <strong>API</strong>, em Variables:{' '}
+              <strong>Produção (Railway):</strong> serviço da <strong>API</strong> → <em>Variables</em> →{' '}
               <code>ZAPI_ENABLED=true</code>, <code>ZAPI_INSTANCE_ID</code>, <code>ZAPI_TOKEN</code>, <code>ZAPI_OWNER_PHONE</code>.
-              {' '}Não comite nem edite <code>application.properties</code> no repositório para isso — em prod o Spring lê estas variáveis.
+              {' '}Não coloques tokens no Git; em prod o Spring lê só estas variáveis (não edites <code>application.properties</code> no repositório para segredos).
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong>Docker:</strong> mesmo nomes no <code>.env</code> (ver <code>.env.example</code>), aplicados ao container da API.
+              <strong>Docker:</strong> as mesmas chaves no <code>.env</code> do container da API — ver <code>.env.example</code>.
             </li>
             <li style={{ marginBottom: 8 }}>
-              <strong>Desenvolvimento local</strong> (só no teu PC, run local da API): ficheiro{' '}
+              <strong>PC local (API a correr na máquina):</strong> ficheiro{' '}
               <code style={{ wordBreak: 'break-all' }}>bolinho-bacalhau/src/main/resources/application.properties</code>
-              {' — '}<code>zapi.enabled=true</code> e preencher <code>zapi.instance-id</code>, <code>zapi.token</code>, <code>zapi.owner-phone</code>.
+              {' — '}<code>zapi.enabled=true</code> e <code>zapi.instance-id</code>, <code>zapi.token</code>, <code>zapi.owner-phone</code>.
             </li>
           </ul>
           <p style={{ margin: '10px 0 0' }}>
-            Com envio desligado, a API <strong>não chama a Z-API</strong> (só imprime nos logs do servidor). Na tabela abaixo pode
-            aparecer como enviado com sucesso, mas é <strong>simulado</strong> — a mensagem não chega ao WhatsApp.
+            Na tabela: <strong>Simulado</strong> = a API não chamou a Z-API (envio desligado ou registo interno).
+            <strong> Enviado</strong> = a Z-API respondeu com sucesso.
+            <strong> Falhou</strong> = erro HTTP ou resposta da Z-API (passe o rato no estado para ver o detalhe).
           </p>
         </div>
 
@@ -95,11 +106,7 @@ export default function Notificacoes() {
                     <td><span className={`badge ${TYPE_BADGE[n.type] || 'badge-navy'}`}>{TYPE_LABEL[n.type] || n.type}</span></td>
                     <td style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 12 }}>{n.phone}</td>
                     <td style={{ fontSize: 12, color: 'var(--navy-muted)' }}>{new Date(n.sentAt).toLocaleString('pt-BR')}</td>
-                    <td>
-                      {n.success
-                        ? <span className="badge badge-green">Enviado</span>
-                        : <span className="badge badge-red" title={n.errorMessage}>Falhou</span>}
-                    </td>
+                    <td>{statusCell(n)}</td>
                     <td style={{ fontSize: 12, color: 'var(--navy-muted)', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {n.message?.replace(/\*/g, '').substring(0, 80)}...
                     </td>

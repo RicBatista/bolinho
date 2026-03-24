@@ -13,4 +13,8 @@ public interface NotificationLogRepository extends JpaRepository<NotificationLog
     List<NotificationLog> findTop20ByOrderBySentAtDesc();
     Optional<NotificationLog> findTopByTypeAndPhoneAndSentAtAfterOrderBySentAtDesc(
             NotificationType type, String phone, LocalDateTime after);
+
+    /** Só envios reais com sucesso contam para cooldown (simulado ou falha não bloqueiam). */
+    Optional<NotificationLog> findTopByTypeAndPhoneAndSuccessTrueAndSentAtAfterOrderBySentAtDesc(
+            NotificationType type, String phone, LocalDateTime after);
 }
