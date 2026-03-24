@@ -48,14 +48,14 @@ export default function Notificacoes() {
           <h1>Notificações WhatsApp</h1>
         </div>
 
-        <div className="alert alert-warn" style={{ marginBottom: 20, lineHeight: 1.5 }}>
+        <div className="alert alert-info" style={{ marginBottom: 20, lineHeight: 1.5 }}>
           <p style={{ margin: '0 0 10px' }}>
             O WhatsApp só é enviado pela <strong>Z-API no serviço da API (Java)</strong>, não por este site.
             Se o telemóvel não recebe nada, o problema está nas <strong>Variables</strong> / credenciais desse backend — não aqui.
           </p>
           <ul style={{ margin: 0, paddingLeft: 20 }}>
             <li style={{ marginBottom: 8 }}>
-              <strong>Produção (Railway):</strong> serviço da <strong>API</strong> → <em>Variables</em> →{' '}
+              <strong>Produção (Railway):</strong> serviço da API → Variables →{' '}
               <code>ZAPI_ENABLED=true</code>, <code>ZAPI_INSTANCE_ID</code>, <code>ZAPI_TOKEN</code>, <code>ZAPI_OWNER_PHONE</code>.
               {' '}Não coloques tokens no Git; em prod o Spring lê só estas variáveis (não edites <code>application.properties</code> no repositório para segredos).
             </li>
