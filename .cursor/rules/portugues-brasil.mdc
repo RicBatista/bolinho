@@ -1,8 +1,30 @@
 ---
-description: Português do Brasil em UI, mensagens e texto orientado ao utilizador
-globs: "**/*.{jsx,js,java,properties,md}"
+description: Português do Brasil (pt-BR) — UI, API ao utilizador e respostas da IA; proibido pt-PT
+globs: "**/*"
+alwaysApply: true
 ---
 
-- Usar **português do Brasil (pt-BR)** em textos de interface, alertas, validações, comentários de produto e documentação voltada ao time.
-- Vocabulário brasileiro (ex.: salvar, endereço, telefone, encomenda, estoque).
-- Datas e números monetários no padrão **pt-BR** quando exibidos ao utilizador.
+# Idioma: português do Brasil (pt-BR) apenas
+
+## Assistência (respostas do assistente Cursor)
+
+- Responder **sempre em pt-BR**, como no Brasil: **você**, **pode**, **não** usar tratamento **tu** nem verbos no **segunda pessoa de Portugal** (ex.: *podes*, *tens*, *fazes*, *verificares*, *acederes*).
+- Preferir **acessar** (não *aceder*), **arquivo** quando for documentação geral (no código, seguir o que já existe: *ficheiro* só se o projeto já usar essa palavra na UI).
+- **Celular** ou **telefone** no sentido de aparelho móvel; evitar *telemóvel* salvo consistência com texto já existente no produto.
+
+### Não usar (português de Portugal)
+
+| Evitar (pt-PT) | Usar (pt-BR) |
+|----------------|--------------|
+| aceder | acessar |
+| tu, tua, teu, contigo | você, sua, seu (ou omitir o sujeito) |
+| podes, queres, tens | você pode, você quer, você tem |
+| verificares, configurares, preencheres | você verificar, você configurar, você preencher |
+| utilizador (se quiser alinhar ao BR comum) | usuário (ou manter *utilizador* se o app já padronizar assim) |
+| telemóvel | celular ou telefone |
+
+## Produto (código)
+
+- Interface, alertas, validações, mensagens de API ao frontend: **pt-BR**.
+- Comentários voltados ao time: **pt-BR**; comentários técnicos mínimos alinhados ao ficheiro.
+- Datas e valores monetários ao utilizador: padrão **pt-BR** (`pt-BR`, `BRL`).
