@@ -4,11 +4,13 @@ import { getHistoricoNotificacoes, testarEstoqueBaixo, testarContasVencidas, tes
 
 const TYPE_LABEL = {
   ESTOQUE_BAIXO: 'Estoque baixo', CONTA_VENCENDO: 'Conta a vencer',
-  CONTA_VENCIDA: 'Conta vencida', VENDA_REALIZADA: 'Venda', RESUMO_DIARIO: 'Resumo diário'
+  CONTA_VENCIDA: 'Conta vencida', VENDA_REALIZADA: 'Venda', RESUMO_DIARIO: 'Resumo diário',
+  CLIENTE_WHATSAPP: 'Cliente (pedido)',
 }
 const TYPE_BADGE = {
   ESTOQUE_BAIXO: 'badge-gold', CONTA_VENCENDO: 'badge-terra',
-  CONTA_VENCIDA: 'badge-red', VENDA_REALIZADA: 'badge-green', RESUMO_DIARIO: 'badge-navy'
+  CONTA_VENCIDA: 'badge-red', VENDA_REALIZADA: 'badge-green', RESUMO_DIARIO: 'badge-navy',
+  CLIENTE_WHATSAPP: 'badge-green',
 }
 
 export default function Notificacoes() {
@@ -34,7 +36,11 @@ export default function Notificacoes() {
         </div>
 
         <div className="alert alert-warn" style={{ marginBottom: 20 }}>
-          Para ativar o envio real, configure <strong>zapi.enabled=true</strong> e preencha as credenciais no <code>application.properties</code>. Enquanto desativado, as mensagens aparecem apenas nos logs da API.
+          Para <strong>envio real</strong> pela Z-API: defina <code>zapi.enabled=true</code> e preencha{' '}
+          <code>zapi.instance-id</code>, <code>zapi.token</code> e <code>zapi.owner-phone</code> em{' '}
+          <code>bolinho-bacalhau/src/main/resources/application.properties</code> (desenvolvimento local), ou as variáveis{' '}
+          <code>ZAPI_ENABLED=true</code>, <code>ZAPI_INSTANCE_ID</code>, <code>ZAPI_TOKEN</code> e <code>ZAPI_OWNER_PHONE</code> no Railway / Docker (ver <code>.env.example</code>).
+          Com <code>zapi.enabled=false</code>, as mensagens só aparecem nos logs da API (modo simulado).
         </div>
 
         {/* Trigger cards */}
