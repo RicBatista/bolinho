@@ -37,27 +37,20 @@ export default function Notificacoes() {
 
         <div className="alert alert-warn" style={{ marginBottom: 20, lineHeight: 1.5 }}>
           <p style={{ margin: '0 0 10px' }}>
-            A Z-API corre no <strong>backend (API Java)</strong>, não neste site. Ative credenciais lá.
+            <strong>Envio real (Z-API):</strong> use <code>zapi.enabled=true</code> e credenciais preenchidas.
           </p>
           <ul style={{ margin: 0, paddingLeft: 20 }}>
             <li style={{ marginBottom: 8 }}>
-              <strong>Produção (Railway, etc.):</strong> no serviço onde está a <strong>API</strong>, em Variables:{' '}
-              <code>ZAPI_ENABLED=true</code>, <code>ZAPI_INSTANCE_ID</code>, <code>ZAPI_TOKEN</code>, <code>ZAPI_OWNER_PHONE</code>.
-              {' '}Não comite nem edite <code>application.properties</code> no repositório para isso — em prod o Spring lê estas variáveis.
-            </li>
-            <li style={{ marginBottom: 8 }}>
-              <strong>Docker:</strong> mesmo nomes no <code>.env</code> (ver <code>.env.example</code>), aplicados ao container da API.
+              <strong>Desenvolvimento local:</strong> ficheiro{' '}
+              <code style={{ wordBreak: 'break-all' }}>bolinho-bacalhau/src/main/resources/application.properties</code>
+              {' — '}<code>zapi.instance-id</code>, <code>zapi.token</code>, <code>zapi.owner-phone</code>.
             </li>
             <li>
-              <strong>Só no teu PC (run local da API):</strong> ficheiro{' '}
-              <code style={{ wordBreak: 'break-all' }}>bolinho-bacalhau/src/main/resources/application.properties</code>
-              {' — '}<code>zapi.enabled=true</code> e preencher <code>zapi.instance-id</code>, <code>zapi.token</code>, <code>zapi.owner-phone</code>.
+              <strong>Railway / Docker:</strong> variáveis{' '}
+              <code>ZAPI_ENABLED=true</code>, <code>ZAPI_INSTANCE_ID</code>, <code>ZAPI_TOKEN</code>, <code>ZAPI_OWNER_PHONE</code>
+              {' '}(modelo em <code>.env.example</code>).
             </li>
           </ul>
-          <p style={{ margin: '10px 0 0' }}>
-            Com envio desligado, a API <strong>não chama a Z-API</strong> (só imprime nos logs do servidor). Na tabela abaixo pode
-            aparecer como enviado com sucesso, mas é <strong>simulado</strong> — a mensagem não chega ao WhatsApp.
-          </p>
         </div>
 
         {/* Trigger cards */}
