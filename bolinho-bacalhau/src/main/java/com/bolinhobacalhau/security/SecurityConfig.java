@@ -40,6 +40,7 @@ public class SecurityConfig {
             .cors(c -> c.configurationSource(corsSource()))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**","/api/health","/swagger-ui/**","/swagger-ui.html",
                     "/api-docs/**","/h2-console/**","/","/index.html",
                     "/assets/**","/*.js","/*.css","/*.ico").permitAll()
@@ -85,6 +86,8 @@ public class SecurityConfig {
         List<String> patterns = new ArrayList<>();
         patterns.add("http://localhost:*");
         patterns.add("http://127.0.0.1:*");
+        // Railway (front e API em *.up.railway.app) — evita 403/405 em preflight se CORS_ALLOWED_ORIGINS faltar
+        patterns.add("https://*.up.railway.app");
         // Produção: front em HTTPS ou domínio (variável CORS_ALLOWED_ORIGINS)
         Arrays.stream(allowedOrigins.split(","))
             .map(String::trim)

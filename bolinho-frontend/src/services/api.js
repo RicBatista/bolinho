@@ -1,10 +1,16 @@
 import axios from 'axios'
 
-// Local (docker/dev): proxy via vite → /api → localhost:8080
-// Produção (Railway/Render): VITE_API_URL aponta direto para o backend
-const baseURL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api`
-  : '/api'
+// Local: proxy Vite → /api. Produção: VITE_API_URL = origem do backend (https://… sem / no fim).
+// Aceita também …/api por engano (evita …/api/api/... e respostas estranhas).
+function buildApiBaseURL() {
+  const raw = import.meta.env.VITE_API_URL?.trim()
+  if (!raw) return '/api'
+  let base = raw.replace(/\/+$/, '')
+  if (base.endsWith('/api')) base = base.slice(0, -4).replace(/\/+$/, '')
+  return `${base}/api`
+}
+
+const baseURL = buildApiBaseURL()
 
 const api = axios.create({ baseURL })
 
