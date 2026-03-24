@@ -37,9 +37,9 @@ services:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DATABASE_URL:      jdbc:postgresql://postgres:5432/bolinhodb
-      DATABASE_USERNAME: bolinho_user
-      DATABASE_PASSWORD: bolinho_pass
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bolinhodb
+      SPRING_DATASOURCE_USERNAME: bolinho_user
+      SPRING_DATASOURCE_PASSWORD: bolinho_pass
       JWT_SECRET:        bolinho-docker-local-secret-troque-em-prod
       JWT_EXPIRATION_HOURS: 24
       ZAPI_ENABLED:      false

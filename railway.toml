@@ -1,5 +1,5 @@
 # Monorepo: força build por Docker (evita Railpack na raiz sem pom.xml/package.json).
-# Variáveis: PostgreSQL plugin + DATABASE_URL (JDBC), DATABASE_USERNAME, DATABASE_PASSWORD,
+# PostgreSQL: ligar o plugin ao serviço (PGHOST, PGDATABASE, PGUSER, PGPASSWORD, …).
 # JWT_SECRET, CORS_ALLOWED_ORIGINS (URL do frontend), PORT é injetado pelo Railway.
 [build]
 builder = "DOCKERFILE"

@@ -35,7 +35,7 @@ docker compose up -d --build    # rebuild após mudanças
 1. `git push` para o GitHub
 2. Novo projeto → **Deploy from GitHub** → este repositório
 3. O ficheiro **`railway.toml` na raiz** e o **`Dockerfile` na raiz** fazem o build com **Docker** (não Railpack). Não é preciso definir “Root Directory” para uma subpasta.
-4. Adicionar o plugin **PostgreSQL** e copiar as variáveis `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD` (ou mapear para `DATABASE_USERNAME` conforme `application-prod.properties`)
+4. Adicionar o plugin **PostgreSQL** e **ligar** ao serviço do backend (o Railway injeta `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`). Não é preciso copiar `DATABASE_URL` manualmente para o Spring.
 5. Definir pelo menos: `JWT_SECRET` (valor longo e aleatório), `CORS_ALLOWED_ORIGINS` (URL do teu frontend, ex. `https://xxx.up.railway.app`)
 6. Em **Settings → Networking** gerar domínio para o serviço do backend
 

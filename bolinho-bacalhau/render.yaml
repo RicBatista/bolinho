@@ -18,7 +18,7 @@ services:
         fromDatabase:
           name: bolinho-bacalhau-db
           property: password
-    healthCheckPath: /api/dashboard
+    healthCheckPath: /api/health
 
 databases:
   - name: bolinho-bacalhau-db
